@@ -9,7 +9,7 @@ from binary_search import search, get_location_from_line
 
 class LineCache:
     def __init__(self):
-        self.capacity = 999
+        self.capacity = 1000
         self.count_per_eviction = 200
         self.cache = {}
         self.key_list = []
@@ -114,11 +114,11 @@ def extend_dataset(chr, purpose):
 
             alignment_matrix = np.zeros((1000, 100, 4), dtype='uint8')
 
-            for index, hg_letter in enumerate(sequence):
-                alignment_matrix[index, 0, :] = mapping[hg_letter]
+            for letter_index, hg_letter in enumerate(sequence):
+                alignment_matrix[letter_index, 0, :] = mapping[hg_letter]
 
             start_line_hint = None
-            for index, coordinate in enumerate(range(start_coordinate - flanking_number, start_coordinate + 200 + flanking_number)):
+            for letter_index, coordinate in enumerate(range(start_coordinate - flanking_number, start_coordinate + 200 + flanking_number)):
                 if coordinate in cache:
                     result = cache[coordinate]
                 elif not start_line_hint:
@@ -132,14 +132,15 @@ def extend_dataset(chr, purpose):
                         
                     start_line_hint = result[1]
                     tokens = result[0].strip().split(',')
-                    # Important: pop the human_index first before removing the start index.
-                    # So the human_index will be the correct index.
-                    tokens.pop(human_index)
-                    # aligned_letters = tokens[1:]
+                    # Important: pop the human_index first before removing the start index,
+                    # so that the human_index will be the correct index.
+                    del tokens[human_index]
+                    del tokens[0]
+                    
                     # aligned_letters is 100x4
-                    aligned_letters = alignment_matrix[index]
-                    for species_index, letter in enumerate(tokens[1:]):
-                        # +1 because we want to put hg19 in the first row
+                    aligned_letters = alignment_matrix[letter_index]
+                    for species_index, letter in enumerate(tokens):
+                        # +1 because we put hg19 in the first row
                         aligned_letters[species_index + 1, :] = mapping[letter]
 
             array_list.append(alignment_matrix.transpose((1, 0, 2)))
