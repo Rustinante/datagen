@@ -1,0 +1,15 @@
+.DS_Store
+.idea
+*.csv
+data/
+hg19.2bit
+__pycache__/
+*.align
+*.gz
+*.md5
+*.hdf5
+train_coord
+test_coord
+valid_coord
+coord
+
