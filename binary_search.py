@@ -80,7 +80,9 @@ def search(file, number, filename):
     while file.read(1) != '\n':
         start_index += 1
         if start_index >= high:
-            break
+            print('The header line extends onto or beyond the upper bound.')
+            return None
+        
     # Start at the position after the newline.
     start_index += 1
 
