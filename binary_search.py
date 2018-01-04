@@ -64,9 +64,10 @@ def search(file, number, filename):
     :param number: the nucleotide coordinate number we're searching for
     :param filename: the name of the file that's opened that contains the maf sequence e.g. chr2_maf_sequence.csv
 
-    :return: If there is a line containing the number, the function returns a tuple whose first element is the line we
+    :return: (line, byte-offset) or None
+    If there is a line containing the number, the function returns a tuple whose first element is the line we
     are searching for as a string ending with a newline character, and whose second element is the byte offset
-    of the first byte of the line  from the beginning of the file.
+    of the first byte of the line from the beginning of the file.
 
     It returns None if there is no line containing the number.
     """

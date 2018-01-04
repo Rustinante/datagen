@@ -6,6 +6,45 @@ import time
 
 from binary_search import search, get_location_from_line
 
+
+class LineCache:
+    def __init__(self):
+        self.capacity = 999
+        self.count_per_eviction = 200
+        self.cache = {}
+        self.key_list = []
+        
+    def evict(self):
+        for key in self.key_list[:self.count_per_eviction]:
+            del self.cache[key]
+        self.key_list = self.key_list[self.count_per_eviction:]
+    
+    def __contains__(self, item):
+        return item in self.cache
+    
+    def __getitem__(self, item):
+        return self.cache[item]
+    
+    def __setitem__(self, key, value):
+        if len(self.cache) >= self.capacity:
+            self.evict()
+        self.cache[key] = value
+        if key not in self.key_list:
+            self.key_list.append(key)
+        
+    def __len__(self):
+        return len(self.cache)
+    
+    def keys(self):
+        return self.cache.keys()
+    
+    def values(self):
+        return self.cache.values()
+    
+    def items(self):
+        return self.cache.items()
+        
+        
 mapping = {
     'a': np.array([1, 0, 0, 0]),
     'A': np.array([1, 0, 0, 0]),
@@ -48,6 +87,8 @@ def scan_through_line_for_number(alignment_file, start_line_hint, number):
 
 
 def extend_dataset(chr, purpose):
+    cache = LineCache()
+    
     array_list = []
 
     coordinate_filename = os.path.join('data', '{}_{}'.format(chr, purpose))
@@ -78,12 +119,17 @@ def extend_dataset(chr, purpose):
 
             start_line_hint = None
             for index, coordinate in enumerate(range(start_coordinate - flanking_number, start_coordinate + 200 + flanking_number)):
-                if not start_line_hint:
+                if coordinate in cache:
+                    result = cache[coordinate]
+                elif not start_line_hint:
                     result = search(alignment_file, coordinate, alignment_filename)
                 else:
                     result = scan_through_line_for_number(alignment_file=alignment_file, start_line_hint=start_line_hint, number=coordinate)
 
                 if result:
+                    if coordinate not in cache:
+                        cache[coordinate] = result
+                        
                     start_line_hint = result[1]
                     tokens = result[0].strip().split(',')
                     # Important: pop the human_index first before removing the start index.
@@ -112,10 +158,6 @@ def extend_dataset(chr, purpose):
         feature_data = feature_group.create_dataset('data', (len(array_list), 100, 1000, 4), dtype='uint8')
         for index, matrix in enumerate(array_list):
             feature_data[index] = matrix
-            # for row in range(100):
-            #     species_sequence = matrix[row]
-            #     for column in range(1000):
-            #         feature_data[index][row][column] = mapping[species_sequence[column]]()
 
     print('=> Finished serializeing in {:.5f}s'.format(time.time() - stamp))
 
