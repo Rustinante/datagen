@@ -120,16 +120,15 @@ def extend_dataset(chr, purpose):
             start_line_hint = None
             for letter_index, coordinate in enumerate(range(start_coordinate - flanking_number, start_coordinate + 200 + flanking_number)):
                 if coordinate in cache:
-                    result = cache[coordinate]
+                    alignment_matrix[letter_index][1:, :] = cache[coordinate]
+                    continue
+                    
                 elif not start_line_hint:
                     result = search(alignment_file, coordinate, alignment_filename)
                 else:
                     result = scan_through_line_for_number(alignment_file=alignment_file, start_line_hint=start_line_hint, number=coordinate)
 
                 if result:
-                    if coordinate not in cache:
-                        cache[coordinate] = result
-                        
                     start_line_hint = result[1]
                     tokens = result[0].strip().split(',')
                     # Important: pop the human_index first before removing the start index,
@@ -140,8 +139,11 @@ def extend_dataset(chr, purpose):
                     # aligned_letters is 100x4
                     aligned_letters = alignment_matrix[letter_index]
                     for species_index, letter in enumerate(tokens):
+                        # aligned_letters is 100x4
                         # +1 because we put hg19 in the first row
                         aligned_letters[species_index + 1, :] = mapping[letter]
+
+                    cache[coordinate] = aligned_letters[1:, :]
 
             array_list.append(alignment_matrix.transpose((1, 0, 2)))
 
