@@ -12,4 +12,5 @@ train_coord
 test_coord
 valid_coord
 coord
+*.mat
 

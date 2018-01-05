@@ -164,10 +164,15 @@ def extend_dataset(chr, purpose):
     print('=> Serializing...')
     with h5py.File(pickle_filename, 'w') as file:
         feature_group = file.create_group('feature')
+        
+        array_list_length = len(array_list)
 
-        feature_data = feature_group.create_dataset('data', (len(array_list), 100, 1000, 4), dtype='uint8')
+        feature_data = feature_group.create_dataset('data', (array_list_length, 100, 1000, 4), dtype='uint8')
         for index, matrix in enumerate(array_list):
             feature_data[index] = matrix
+            
+            if index % 1000 == 0:
+                print("{}/{} in {:5f}s".format(index, array_list_length, time.time() - stamp))
 
     print('=> Finished serializeing in {:.5f}s'.format(time.time() - stamp))
 
