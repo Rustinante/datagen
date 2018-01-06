@@ -60,7 +60,8 @@ mapping = {
 
     'X': np.array([0, 0, 0, 0]),
 
-    'N': np.array([0, 0, 0, 0])
+    'N': np.array([0, 0, 0, 0]),
+    'n': np.array([0, 0, 0, 0])
 }
 
 
@@ -154,7 +155,7 @@ def extend_dataset(chr, purpose):
             # print("cache: {} binary search: {} line search {}".format(c1,c2,c3))
             array_list.append(alignment_matrix.transpose((1, 0, 2)))
 
-            if processed_line_count % 100 == 0:
+            if processed_line_count % 1000 == 0:
                 elapsed_time = time.time() - start_time
                 time_per_line = elapsed_time / processed_line_count
                 print('Processed {} lines in {:5f}s, averaging: {:5f}s per line'
