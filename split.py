@@ -17,6 +17,9 @@ with open ('coord', 'r') as f, open('train_coord', 'w') as train_file, open('val
         line = f.readline()
         if not line:
             break
+        chr = line.split()[0]
+        if chr != 'chr8' or chr != 'chr9':
+            continue
         test_file.write(line)
         line_number += 1
     print("{} lines for test_coord".format(line_number))
