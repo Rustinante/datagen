@@ -1,6 +1,7 @@
 from collections import defaultdict
 import numpy as np
 import h5py
+from scipy import io
 import time
 
 
@@ -30,16 +31,63 @@ def collect_labels():
 
 def add_labels_to_dataset(labels_dict):
     for chr, label_list in labels_dict.items():
-        num_labels = len(label_list)
         label_array = np.array(label_list)
-        print('=> {} has {} labels with a corresponding array of shape {}'.format(chr, num_labels, label_array.shape))
+        print('=> {} has {} labels with a corresponding array of shape {}'
+              .format(chr, len(label_list), label_array.shape))
+        
         hdf5_filename = '{}_train.align.hdf5'.format(chr)
         print('=> opening {}'.format(hdf5_filename))
+        
         with h5py.File(hdf5_filename, 'r+') as hdf5_file:
             group = hdf5_file.create_group('label')
             dataset = group.create_dataset('data', data=label_array, dtype='uint8')
         print('=> added the labels to {}'.format(hdf5_filename))
+        
+
+def collect_validation_labels():
+    print('=> collecting labels')
+    
+    labels_dict = defaultdict(list)
+    stamp = time.time()
+    
+    validation_file = io.loadmat('valid.mat')
+    
+    with open('valid_coord', 'r') as valid_coord_file:
+        validation_labels = validation_file['validdata']
+        print('validation labels has shape: {}'.format(validation_labels.shape))
+        
+        for line_index, line in enumerate(valid_coord_file):
+            tokens = line.split()
+            chr = tokens[0]
+            labels_dict[chr].append(validation_labels[line_index, :])
             
+            if line_index % 1000 == 999:
+                elapsed = time.time() - stamp
+                processed_line_count = line_index + 1
+                print('processed {} lines in {:5f}s, averaging {:5f}s per line'
+                      .format(processed_line_count, elapsed, elapsed / processed_line_count))
+    
+    return labels_dict
+
+
+def add_labels_to_validation_datset(labels_dict):
+    for chr, label_list in labels_dict.items():
+        label_array = np.array(label_list)
+        print('=> {} has {} labels with a corresponding array of shape {}'
+              .format(chr, len(label_list), label_array.shape))
+        
+        hdf5_filename = '{}_valid.align.hdf5'.format(chr)
+        print('=> opening {}'.format(hdf5_filename))
+        
+        with h5py.File(hdf5_filename, 'r+') as hdf5_file:
+            group = hdf5_file.create_group('label')
+            dataset = group.create_dataset('data', data=label_array, dtype='uint8')
+        print('=> added the labels to {}'.format(hdf5_filename))
+    
 
 if __name__ == '__main__':
-    collected_labels = collect_labels()
+    # collected_labels = collect_labels()
+    # add_labels_to_dataset(collected_labels)
+    validation_labels = collect_validation_labels()
+    print('=> adding labels to the validation dataset')
+    add_labels_to_validation_datset(validation_labels)
