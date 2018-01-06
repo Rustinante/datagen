@@ -88,6 +88,9 @@ def scan_through_line_for_number(alignment_file, start_line_hint, number):
 
 
 def extend_dataset(chr, purpose):
+    checkpoint_time_str = time.strftime('%a %b %d %Y %H:%M:%S UTC%z', time.localtime(time.time()))
+    print('Current time: {}'.format(checkpoint_time_str))
+    
     cache = LineCache()
     
     array_list = []
