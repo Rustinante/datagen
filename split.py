@@ -18,7 +18,7 @@ with open ('coord', 'r') as f, open('train_coord', 'w') as train_file, open('val
         if not line:
             break
         chr = line.split()[0]
-        if chr != 'chr8' or chr != 'chr9':
+        if chr != 'chr8' and chr != 'chr9':
             continue
         test_file.write(line)
         line_number += 1

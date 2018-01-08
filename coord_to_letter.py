@@ -21,7 +21,29 @@ def coord_to_letter(coord_filename, data_purpose, genome_dict):
             if len(dna_sequence) != 1000:
                 print('The DNA sequence is not 200 bp in length!')
                 print('chr: {} start: {} stop: {}'.format(chr, start, stop))
+                
+                middle = genome_dict[chr].get_slice(start, stop)
+                assert(len(middle) == 200)
+                
+                left = genome_dict[chr].get_slice(start - 400, start)
+                right = genome_dict[chr].get_slice(stop + 1, stop + 401)
+                
+                if len(left) != 400:
+                    print('The left flanking sequence has length {}'.format(len(left)))
+                    padding = 'N' * (400 - len(left))
+                    left = padding + left
+                
+                if len(right) != 400:
+                    print('The right flanking sequence has length {}'.format(len(right)))
+                    padding = 'N' * (400 - len(right))
+                    right = right + padding
+                    
+                padded_sequence = left + middle + right
+                assert(len(padded_sequence) == 1000)
+                print('Padded the sequence to {}'.format(padded_sequence))
+                opened_files[chr].write('{},{}'.format(start, padded_sequence) + '\n')
                 continue
+                
             opened_files[chr].write('{},{}'.format(start, dna_sequence) + '\n')
 
     for chr_index, file in opened_files.items():
