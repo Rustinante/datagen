@@ -1,8 +1,10 @@
-import pickle
 import numpy as np
+import h5py
+import argparse
+import time
 
-def generate_reverse_complement(filename, output_filename):
-    print('output filename: {}'.format(output_filename))
+
+def generate_reverse_complement(chr, purpose):
     complement_map = {
         'a': 't',
         't': 'a',
@@ -13,24 +15,80 @@ def generate_reverse_complement(filename, output_filename):
         'C': 'G',
         'G': 'C',
         'N': 'N',
-        'X': 'X'
+        'n': 'n',
+        'X': 'X',
+        'x': 'x'
     }
-    reverse_complement_list = []
-    with open(filename, 'rb') as file:
-        data = pickle.load(file)
+    
+    a_array = np.array([1, 0, 0, 0], dtype='uint8')
+    g_array = np.array([0, 1, 0, 0], dtype='uint8')
+    c_array = np.array([0, 0, 1, 0], dtype='uint8')
+    t_array = np.array([0, 0, 0, 1], dtype='uint8')
+    zero_array = np.array([0, 0, 0, 0], dtype='uint8')
+    
+    hdf5_filename = '{}_{}.primate.hdf5'.format(chr, purpose)
+    feature_key = 'feature/data'
+    label_key = 'label/data'
+    
+    rev_comp_filename = '{}_{}.rev_comp.primate.hdf5'.format(chr, purpose)
+    
+    print('opening {} and creating {}'.format(hdf5_filename, rev_comp_filename))
+    
+    with h5py.File(hdf5_filename, 'r') as hdf5_file, h5py.File(rev_comp_filename) as revcomp_file:
+        original_feature = hdf5_file[feature_key]
+        print('feature has shape: ', original_feature.shape)
+        num_samples = original_feature.shape[0]
+        
+        feature_group = revcomp_file.create_group('feature')
+        # new_feature is the reverse complement data
+        new_feature = feature_group.create_dataset('data', (num_samples, 12, 1000, 4), dtype='uint8')
 
-    for matrix in data:
-        reverse_complement_matrix = np.empty_like(matrix)
-        # each matrix is 100 x 1000 where each row corresponds to one species
-        for row in range(100):
-            strand = matrix[row]
-            reverse_complement_strand = reverse_complement_matrix[row]
-            for column in range(1000):
-                reverse_complement_strand[999 - column] = complement_map[strand[column]]
+        print('=> copying the features')
+        stamp = time.time()
+        
+        for sample_index in range(num_samples):
+            sample = original_feature[sample_index]
+            # sample should be of size 12x1000x4
+            revcomp_matrix = np.zeros_like(sample, dtype='uint8')
+            
+            for species_index in range(12):
+                species_row = revcomp_matrix[species_index]
+                
+                for nucleotide_index in range(1000):
+                    original_encoding = sample[species_index][nucleotide_index]
+                    
+                    if np.array_equal(original_encoding, a_array):
+                        species_row[999 - nucleotide_index] = t_array
+                        
+                    elif np.array_equal(original_encoding, g_array):
+                        species_row[999 - nucleotide_index] = c_array
+                        
+                    elif np.array_equal(original_encoding, c_array):
+                        species_row[999 - nucleotide_index] = g_array
+                        
+                    elif np.array_equal(original_encoding, t_array):
+                        species_row[999 - nucleotide_index] = a_array
+                        
+                    else:
+                        # all zeros
+                        species_row[999 - nucleotide_index] = zero_array
+            
+            new_feature[sample_index] = revcomp_matrix
+            
+            if sample_index % 1000 == 1:
+                print('{}/{} {:5f} done in {:2f}s'
+                      .format(sample_index, num_samples, sample_index / num_samples, time.time() - stamp))
 
-        reverse_complement_list.append(reverse_complement_matrix)
+        print('=> copying the labels')
+        label_group = revcomp_file.create_group('label')
+        label_array = hdf5_file[label_key]
+        label_group.create_dataset('data', data=label_array, dtype='uint8')
+        print('=> copied the labels')
 
-    print('=> pickling...')
-    with open(output_filename, 'wb') as output_file:
-        pickle.dump(reverse_complement_list, output_file, protocol=pickle.HIGHEST_PROTOCOL)
-    print('=> finished pickling')
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('chr')
+    parser.add_argument('purpose')
+    args = parser.parse_args()
+    generate_reverse_complement(args.chr, args.purpose)
