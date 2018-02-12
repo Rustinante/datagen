@@ -97,11 +97,11 @@ def extend_dataset(chr, purpose):
 
     coordinate_filename = os.path.join('data', '{}_{}'.format(chr, purpose))
     alignment_filename = '{}_maf_sequence.csv'.format(chr)
-    pickle_filename = '{}_{}.align.hdf5'.format(chr, purpose)
+    hdf5_filename = '{}_{}.align.hdf5'.format(chr, purpose)
 
     print('=> coordinate_filename: {}'.format(coordinate_filename))
     print('=> alignment_filename: {}'.format(alignment_filename))
-    print('=> target pickle_filename: {}'.format(pickle_filename))
+    print('=> target hdf5_filename: {}'.format(hdf5_filename))
 
     with open(coordinate_filename, 'r') as file, open(alignment_filename, 'r') as alignment_file:
         header = alignment_file.readline().strip().split(',')
@@ -166,7 +166,7 @@ def extend_dataset(chr, purpose):
 
     stamp = time.time()
     print('=> Serializing...')
-    with h5py.File(pickle_filename, 'w') as file:
+    with h5py.File(hdf5_filename, 'w') as file:
         feature_group = file.create_group('feature')
         
         array_list_length = len(array_list)
