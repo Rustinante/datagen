@@ -98,6 +98,8 @@ def extend_dataset(chr, purpose):
     coordinate_filename = os.path.join('data', '{}_{}'.format(chr, purpose))
     alignment_filename = '{}_maf_sequence.csv'.format(chr)
     hdf5_filename = '{}_{}.align.hdf5'.format(chr, purpose)
+    species_indices = [11, 54, 73, 83]
+    number_of_species = len(species_indices) + 1
     
     print('=> coordinate_filename: {}'.format(coordinate_filename))
     print('=> alignment_filename: {}'.format(alignment_filename))
@@ -117,7 +119,7 @@ def extend_dataset(chr, purpose):
             (start_coordinate, sequence) = line.strip().split(',')
             start_coordinate = int(start_coordinate)
             
-            alignment_matrix = np.zeros((1000, 100, 4), dtype='uint8')
+            alignment_matrix = np.zeros((1000, number_of_species, 5), dtype='uint8')
             
             for letter_index, hg_letter in enumerate(sequence):
                 alignment_matrix[letter_index, 0, :] = mapping[hg_letter]
@@ -150,7 +152,6 @@ def extend_dataset(chr, purpose):
                     
                     # aligned_letters is 100x4
                     aligned_letters = alignment_matrix[letter_index]
-                    species_indices = [11, 54, 73, 83]
                     
                     for row_number, species_index in enumerate(species_indices):
                         letter = tokens[species_index]
