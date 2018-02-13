@@ -181,7 +181,7 @@ def extend_dataset(chr, purpose):
         
         array_list_length = len(array_list)
         
-        feature_data = feature_group.create_dataset('data', (array_list_length, 100, 1000, 4), dtype='uint8')
+        feature_data = feature_group.create_dataset('data', (array_list_length, number_of_species, 1000, 5), dtype='uint8')
         for index, matrix in enumerate(array_list):
             feature_data[index] = matrix
             
