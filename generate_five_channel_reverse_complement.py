@@ -27,7 +27,7 @@ def generate_five_channel_reverse_complement(chr, purpose):
     x_array = np.array([0, 0, 0, 0, 1], dtype='uint8')
     zero_array = np.array([0, 0, 0, 0, 0], dtype='uint8')
     
-    hdf5_filename = '{}_{}.align.hdf5'.format(chr, purpose)
+    hdf5_filename = '{}_{}.five_channel.mix.hdf5'.format(chr, purpose)
     feature_key = 'feature/data'
     label_key = 'label/data'
     

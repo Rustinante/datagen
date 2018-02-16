@@ -125,12 +125,12 @@ def add_labels_to_test_dataset(labels_dict):
     
 
 if __name__ == '__main__':
-    # collected_labels = collect_labels()
-    # add_labels_to_dataset(collected_labels)
+    collected_labels = collect_labels()
+    add_labels_to_dataset(collected_labels)
     
-    # validation_labels = collect_validation_labels()
-    # print('=> adding labels to the validation dataset')
-    # add_labels_to_validation_dataset(validation_labels)
+    validation_labels = collect_validation_labels()
+    print('=> adding labels to the validation dataset')
+    add_labels_to_validation_dataset(validation_labels)
     
     test_labels = collect_test_labels()
     print('=> adding labels to the testing dataset')
