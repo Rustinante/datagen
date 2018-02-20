@@ -156,6 +156,12 @@ def extend_dataset(chr, purpose):
                 print('Processed [{}/{}] lines in {:5f}s, averaging: {:5f}s per line, {:3f} done.'
                       .format(processed_line_count, total_line_count,
                               elapsed_time, time_per_line, processed_line_count/total_line_count))
+        
+    for filename, species_filename in species_file_dict.values():
+        print('=> Closing {}'.format(filename))
+        species_filename.close()
+        
+    print('=> Done!')
     
 
 if __name__ == '__main__':
