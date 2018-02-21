@@ -100,6 +100,9 @@ def extend_dataset(chr, purpose):
 
     total_line_count = get_line_count(coordinate_filename)
     
+    dir_name = 'gkm_fasta_chr{}'.format(chr)
+    os.makedirs(dir_name, exist_ok=True)
+    
     with open(coordinate_filename, 'r') as file, open(alignment_filename, 'r') as alignment_file:
         
         header = alignment_file.readline().strip().split(',')
@@ -109,14 +112,15 @@ def extend_dataset(chr, purpose):
         
         for index, species_code in enumerate(header):
             species_filename = '{}_{}_{}.fasta'.format(species_code, chr, purpose)
-            print('=> Creating {}'.format(species_filename))
-            species_file_dict[index] = open('{}_{}_{}.fasta'.format(species_code, chr, purpose), 'w')
+            print('=> Creating {} under {}'.format(species_filename, dir_name))
+            species_file_dict[index] = open(os.path.join(dir_name, species_filename), 'w')
         
         processed_line_count = 0
         start_time = time.time()
         flanking_number = 400
         
         for line in file:
+            t1 = time.time()
             processed_line_count += 1
             (start_coordinate, sequence) = line.strip().split(',')
             start_coordinate = int(start_coordinate)
@@ -155,11 +159,15 @@ def extend_dataset(chr, purpose):
                     tokens = ['N'] * 100
                     distribute_tokens_to_species_sequence(tokens, species_sequence)
                     
+            t2 = time.time()
             for species_index, _ in enumerate(header):
                 species_file_dict[species_index].write('>middle 200 bp start coordinate {}\n'
                                                        '{}\n'
                                                        .format(start_coordinate, species_sequence[species_index]))
                 
+            t3 = time.time()
+            print('t2-t1 {} t3-t2 {}'.format(t2-t1, t3-t2))
+            
             if processed_line_count % 1000 == 0:
                 elapsed_time = time.time() - start_time
                 time_per_line = elapsed_time / processed_line_count

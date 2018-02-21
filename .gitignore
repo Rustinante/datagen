@@ -13,4 +13,5 @@ test_coord
 valid_coord
 coord
 *.mat
+*.fasta
 
