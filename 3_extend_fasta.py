@@ -69,10 +69,11 @@ def scan_through_line_for_number(alignment_file, start_line_hint, number):
     return None
 
 
-def get_line_count(file):
+def get_line_count(filename):
     count = 0
-    for _ in file:
-        count += 1
+    with open(filename, 'r') as file:
+        for _ in file:
+            count += 1
     return count
 
 
@@ -96,9 +97,10 @@ def extend_dataset(chr, purpose):
     
     print('=> coordinate_filename: {}'.format(coordinate_filename))
     print('=> alignment_filename: {}'.format(alignment_filename))
+
+    total_line_count = get_line_count(coordinate_filename)
     
     with open(coordinate_filename, 'r') as file, open(alignment_filename, 'r') as alignment_file:
-        total_line_count = get_line_count(file)
         
         header = alignment_file.readline().strip().split(',')
         del header[0]
