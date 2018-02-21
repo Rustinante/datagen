@@ -88,8 +88,6 @@ def extend_dataset(chr, purpose):
     
     cache = LineCache()
     
-    array_list = []
-    
     coordinate_filename = os.path.join('data', '{}_{}'.format(chr, purpose))
     alignment_filename = '{}_maf_sequence.csv'.format(chr)
     
@@ -108,10 +106,9 @@ def extend_dataset(chr, purpose):
         header = alignment_file.readline().strip().split(',')
         del header[0]
         assert len(header) == 100
-        human_index = header.index('hg19')
         
         for index, species_code in enumerate(header):
-            species_filename = '{}_{}_{}.fasta'.format(species_code, chr, purpose)
+            species_filename = '{}_{}_{}_{}.fasta'.format(index, species_code, chr, purpose)
             print('=> Creating {} under {}'.format(species_filename, dir_name))
             species_file_dict[index] = open(os.path.join(dir_name, species_filename), 'w')
         
@@ -121,8 +118,7 @@ def extend_dataset(chr, purpose):
         
         for line in file:
             processed_line_count += 1
-            (start_coordinate, sequence) = line.strip().split(',')
-            start_coordinate = int(start_coordinate)
+            start_coordinate = int(line.strip().split(',')[0])
             
             species_sequence = defaultdict(str)
             
