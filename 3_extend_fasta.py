@@ -107,7 +107,7 @@ def extend_dataset(chr, purpose):
         
         for index, species_code in enumerate(header):
             species_filename = '{}_{}_{}.fasta'.format(species_code, chr, purpose)
-            print('=> creating {}'.format(species_filename))
+            print('=> Creating {}'.format(species_filename))
             species_file_dict[index] = open('{}_{}_{}.fasta'.format(species_code, chr, purpose), 'w')
         
         processed_line_count = 0
@@ -141,14 +141,22 @@ def extend_dataset(chr, purpose):
                     start_line_hint = result[1]
                     tokens = result[0].strip().split(',')
                     del tokens[0]
-                    assert len(tokens) == 100
+                    # assert len(tokens) == 100
                     
                     distribute_tokens_to_species_sequence(tokens, species_sequence)
                     
                     cache[coordinate] = (tokens, start_line_hint)
+                
+                else:
+                    print('Failed to find the letters at coordinate {}. '
+                          'Substituting with N instead'.format(coordinate))
+                    tokens = ['N'] * 100
+                    distribute_tokens_to_species_sequence(tokens, species_sequence)
                     
             for species_index, _ in enumerate(header):
-                species_file_dict[species_index].write('>{}\n{}\n'.format(start_coordinate, species_sequence[species_index]))
+                species_file_dict[species_index].write('>middle 200 bp start coordinate {}\n'
+                                                       '{}\n'
+                                                       .format(start_coordinate, species_sequence[species_index]))
                 
             if processed_line_count % 1000 == 0:
                 elapsed_time = time.time() - start_time
