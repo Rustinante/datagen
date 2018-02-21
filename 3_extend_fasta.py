@@ -120,7 +120,6 @@ def extend_dataset(chr, purpose):
         flanking_number = 400
         
         for line in file:
-            t1 = time.time()
             processed_line_count += 1
             (start_coordinate, sequence) = line.strip().split(',')
             start_coordinate = int(start_coordinate)
@@ -159,15 +158,11 @@ def extend_dataset(chr, purpose):
                     tokens = ['N'] * 100
                     distribute_tokens_to_species_sequence(tokens, species_sequence)
                     
-            t2 = time.time()
             for species_index, _ in enumerate(header):
                 species_file_dict[species_index].write('>middle 200 bp start coordinate {}\n'
                                                        '{}\n'
                                                        .format(start_coordinate, species_sequence[species_index]))
                 
-            t3 = time.time()
-            print('t2-t1 {} t3-t2 {}'.format(t2-t1, t3-t2))
-            
             if processed_line_count % 1000 == 0:
                 elapsed_time = time.time() - start_time
                 time_per_line = elapsed_time / processed_line_count
