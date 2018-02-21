@@ -100,7 +100,7 @@ def extend_dataset(chr, purpose):
 
     total_line_count = get_line_count(coordinate_filename)
     
-    dir_name = 'gkm_fasta_chr{}'.format(chr)
+    dir_name = 'gkm_fasta_{}'.format(chr)
     os.makedirs(dir_name, exist_ok=True)
     
     with open(coordinate_filename, 'r') as file, open(alignment_filename, 'r') as alignment_file:
