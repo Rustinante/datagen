@@ -1,9 +1,10 @@
 import os
 import twobitreader
 
+dirname = 'fasta_data'
 
 def get_destination_filename(chr, data_purpose):
-    return os.path.join('gkm_coord_data', '{}_{}'.format(chr, data_purpose))
+    return os.path.join(dirname, '{}_{}'.format(chr, data_purpose))
 
 
 def coord_to_letter(coord_filename, data_purpose, genome_dict):
@@ -53,7 +54,7 @@ def coord_to_letter(coord_filename, data_purpose, genome_dict):
 
 def run():
     genome_dict = twobitreader.TwoBitFile('hg19.2bit')
-    os.makedirs('fasta_data', exist_ok=False)
+    os.makedirs(dirname, exist_ok=False)
     coord_to_letter('train_coord', 'train', genome_dict=genome_dict)
     coord_to_letter('valid_coord', 'valid', genome_dict)
     coord_to_letter('test_coord', 'test', genome_dict)
