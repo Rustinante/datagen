@@ -3,7 +3,7 @@ import twobitreader
 
 
 def get_destination_filename(chr, data_purpose):
-    return os.path.join('data', '{}_{}'.format(chr, data_purpose))
+    return os.path.join('gkm_coord_data', '{}_{}'.format(chr, data_purpose))
 
 
 def coord_to_letter(coord_filename, data_purpose, genome_dict):

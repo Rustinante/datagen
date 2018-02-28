@@ -4,8 +4,6 @@ import h5py
 from scipy import io
 import time
 
-prefix = 'gkm'
-
 
 def collect_labels():
     print('=> collecting training labels')
@@ -37,7 +35,7 @@ def add_labels_to_dataset(labels_dict):
         print('=> {} has {} labels with a corresponding array of shape {}'
               .format(chr, len(label_list), label_array.shape))
         
-        hdf5_filename = '{}.{}.label.hdf5'.format(chr, prefix)
+        hdf5_filename = '{}_train.pure_label.hdf5'.format(chr)
         print('=> opening {}'.format(hdf5_filename))
         
         with h5py.File(hdf5_filename, 'w') as hdf5_file:
@@ -78,7 +76,7 @@ def add_labels_to_validation_dataset(labels_dict):
         print('=> {} has {} labels with a corresponding array of shape {}'
               .format(chr, len(label_list), label_array.shape))
         
-        hdf5_filename = '{}.{}.label.hdf5'.format(chr, prefix)
+        hdf5_filename = '{}_valid.pure_label.hdf5'.format(chr)
         print('=> opening {}'.format(hdf5_filename))
         
         with h5py.File(hdf5_filename, 'w') as hdf5_file:
@@ -117,7 +115,7 @@ def add_labels_to_test_dataset(labels_dict):
         print('=> {} has {} labels with a corresponding array of shape {}'
               .format(chr, len(label_list), label_array.shape))
         
-        hdf5_filename = '{}.{}.label.hdf5'.format(chr, prefix)
+        hdf5_filename = '{}_test.pure_label.hdf5'.format(chr)
         print('=> opening {}'.format(hdf5_filename))
         
         with h5py.File(hdf5_filename, 'w') as hdf5_file:
