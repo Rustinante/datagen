@@ -8,6 +8,7 @@ def split_pos_neg_for_gkm(chr, purpose, label_index):
     def sample_index(index):
         return index / 2
     
+    label_index = int(label_index)
     gkm_data_dirname = 'gkm_fasta'
     pure_label_filename = os.path.join('pure_labels', '{}_{}.pure_label.hdf5'.format(chr, purpose))
     feature_filename = os.path.join(gkm_data_dirname, '{}_{}'.format(chr, purpose))
@@ -16,28 +17,31 @@ def split_pos_neg_for_gkm(chr, purpose, label_index):
     pos_filepath = os.path.join(gkm_data_dirname, pos_filename)
     neg_filepath = os.path.join(gkm_data_dirname, neg_filename)
     
-    print('labels are from {} at index {}\n'
-          'features are from {}\n'
-          'pos_filename: {}\n'
-          'neg_filename: {}'
-          .format(pure_label_filename, label_index, feature_filename, pos_filename, neg_filename))
+    print('=> labels are from {} at index {}\n'
+          '=> features are from {}\n'
+          '=> pos_filename: {}\n'
+          '=> neg_filename: {}\n'
+          '=> label_index: {}'
+          .format(pure_label_filename, label_index, feature_filename, pos_filename, neg_filename, label_index))
     
     with h5py.File(pure_label_filename, 'r') as file, open(feature_filename, 'r') as feature_file,\
-            open(pos_filepath, 'r') as pos_file, open(neg_filepath, 'r') as neg_file:
+            open(pos_filepath, 'w') as pos_file, open(neg_filepath, 'w') as neg_file:
         label = file['label/data']
-        singe_label_column = label[:, label_index]
-        positive_sample_indices = np.nonzero(singe_label_column)
+        single_label_column = label[:, label_index]
+        positive_sample_indices = np.nonzero(single_label_column)[0]
         
-        print(len(positive_sample_indices), positive_sample_indices)
+        print('=> There are {} positive sequences out of {}'.format(len(positive_sample_indices), len(single_label_column)))
         
+        processed_line_count = 0
         for line_index, line in enumerate(feature_file):
             actual_index = sample_index(line_index)
             if actual_index in positive_sample_indices:
                 pos_file.write(line)
             else:
                 neg_file.write(line)
+            processed_line_count += 1
             
-    print('=> processed {}'.format(feature_filename))
+    print('=> processed {} for a total of {} lines'.format(feature_filename, processed_line_count))
 
 
 if __name__ == '__main__':
