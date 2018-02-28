@@ -4,7 +4,7 @@ import h5py
 from scipy import io
 import time
 
-prefix = 'gkm_'
+prefix = 'gkm'
 
 
 def collect_labels():
@@ -25,7 +25,7 @@ def collect_labels():
             if line_index % 10000 == 9999:
                 elapsed = time.time() - stamp
                 processed_line_count = line_index + 1
-                print('processed {} lines in {:5f}s, averaging {:5f}s per line'
+                print('processed {} lines in {:2f}s, averaging {:2f}s per line'
                       .format(processed_line_count, elapsed, elapsed / processed_line_count))
     
     return labels_dict
@@ -40,7 +40,7 @@ def add_labels_to_dataset(labels_dict):
         hdf5_filename = '{}.{}.label.hdf5'.format(chr, prefix)
         print('=> opening {}'.format(hdf5_filename))
         
-        with h5py.File(hdf5_filename, 'r+') as hdf5_file:
+        with h5py.File(hdf5_filename, 'w') as hdf5_file:
             group = hdf5_file.create_group('label')
             dataset = group.create_dataset('data', data=label_array, dtype='uint8')
         print('=> added the labels to {}'.format(hdf5_filename))
@@ -66,7 +66,7 @@ def collect_validation_labels():
             if line_index % 1000 == 999:
                 elapsed = time.time() - stamp
                 processed_line_count = line_index + 1
-                print('processed {} lines in {:5f}s, averaging {:5f}s per line'
+                print('processed {} lines in {:2f}s, averaging {:2f}s per line'
                       .format(processed_line_count, elapsed, elapsed / processed_line_count))
     
     return labels_dict
@@ -78,10 +78,10 @@ def add_labels_to_validation_dataset(labels_dict):
         print('=> {} has {} labels with a corresponding array of shape {}'
               .format(chr, len(label_list), label_array.shape))
         
-        hdf5_filename = '{}.{}.hdf5'.format(chr, prefix)
+        hdf5_filename = '{}.{}.label.hdf5'.format(chr, prefix)
         print('=> opening {}'.format(hdf5_filename))
         
-        with h5py.File(hdf5_filename, 'r+') as hdf5_file:
+        with h5py.File(hdf5_filename, 'w') as hdf5_file:
             group = hdf5_file.create_group('label')
             dataset = group.create_dataset('data', data=label_array, dtype='uint8')
         print('=> added the labels to {}'.format(hdf5_filename))
@@ -105,7 +105,7 @@ def collect_test_labels():
             if line_index % 1000 == 999:
                 elapsed_time = time.time() - stamp
                 processed_line_count = line_index + 1
-                print('processed {} lines in {:5f}s, averaging {:5f}s per line'
+                print('processed {} lines in {:2f}s, averaging {:2f}s per line'
                       .format(processed_line_count, elapsed_time, elapsed_time / processed_line_count))
     
     return labels_dict
@@ -117,10 +117,10 @@ def add_labels_to_test_dataset(labels_dict):
         print('=> {} has {} labels with a corresponding array of shape {}'
               .format(chr, len(label_list), label_array.shape))
         
-        hdf5_filename = '{}.{}.hdf5'.format(chr, prefix)
+        hdf5_filename = '{}.{}.label.hdf5'.format(chr, prefix)
         print('=> opening {}'.format(hdf5_filename))
         
-        with h5py.File(hdf5_filename, 'r+') as hdf5_file:
+        with h5py.File(hdf5_filename, 'w') as hdf5_file:
             group = hdf5_file.create_group('label')
             dataset = group.create_dataset('data', data=label_array, dtype='uint8')
         print('=> added the labels to {}'.format(hdf5_filename))
