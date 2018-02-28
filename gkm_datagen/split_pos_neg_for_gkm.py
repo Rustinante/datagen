@@ -6,7 +6,7 @@ import os
 
 def split_pos_neg_for_gkm(chr, purpose, label_index):
     def sample_index(index):
-        return index / 2
+        return index // 2
     
     label_index = int(label_index)
     gkm_data_dirname = 'gkm_fasta'
@@ -34,6 +34,8 @@ def split_pos_neg_for_gkm(chr, purpose, label_index):
         
         processed_line_count = 0
         for line_index, line in enumerate(feature_file):
+            # coordinate = int(line[1:].strip())
+            # print(coordinate)
             actual_index = sample_index(line_index)
             if actual_index in positive_sample_indices:
                 pos_file.write(line)
