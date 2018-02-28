@@ -166,9 +166,9 @@ def extend_dataset(chr, purpose):
                       .format(processed_line_count, total_line_count,
                               elapsed_time, time_per_line, processed_line_count/total_line_count))
         
-    for filename, species_filename in species_file_dict.items():
+    for filename, species_file in species_file_dict.items():
         print('=> Closing {}'.format(filename))
-        species_filename.close()
+        species_file.close()
         
     print('=> Done!')
     
