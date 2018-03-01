@@ -1,7 +1,8 @@
 import os
 import twobitreader
 
-dirname = 'fasta_data'
+dirname = 'hg19_fasta_aggregate'
+
 
 def get_destination_filename(chr, data_purpose):
     return os.path.join(dirname, '{}_{}'.format(chr, data_purpose))
