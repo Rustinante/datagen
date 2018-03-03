@@ -63,7 +63,7 @@ def split_pos_neg_for_gkm(chr, purpose, label_index):
             neg_sample_indices = neg_sample_indices[random_neg_indices]
             num_neg_samples = len(neg_sample_indices)
         
-        print('=> {} positives {} negatives {} total'
+        print('=> {} positives {} negatives {} total\n'
               '=> Got rid of {} negatives'
               .format(num_pos_samples,
                       num_neg_samples,
