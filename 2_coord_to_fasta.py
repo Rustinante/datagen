@@ -11,6 +11,7 @@ def get_destination_filename(chr, data_purpose):
 def coord_to_letter(coord_filename, data_purpose, genome_dict):
     print('Handling coordinate file: {}'.format(coord_filename))
     opened_files = {}
+    flanking_number = 50
     with open(coord_filename, 'r') as coordinate_file:
         for line in coordinate_file:
             tokens = line.split()
@@ -18,30 +19,31 @@ def coord_to_letter(coord_filename, data_purpose, genome_dict):
             if chr not in opened_files:
                 print('opening {}'.format(get_destination_filename(chr, data_purpose)))
                 opened_files[chr] = open(get_destination_filename(chr, data_purpose), 'w')
-            
-            dna_sequence = genome_dict[chr].get_slice(start - 400, stop + 400)
-            if len(dna_sequence) != 1000:
+
+            target_length = 2 * flanking_number + stop - start
+            dna_sequence = genome_dict[chr].get_slice(start - flanking_number, stop + flanking_number)
+            if len(dna_sequence) != target_length:
                 print('The DNA sequence is not 200 bp in length!')
                 print('chr: {} start: {} stop: {}'.format(chr, start, stop))
                 
                 middle = genome_dict[chr].get_slice(start, stop)
                 assert (len(middle) == 200)
                 
-                left = genome_dict[chr].get_slice(start - 400, start)
+                left = genome_dict[chr].get_slice(start - flanking_number, start)
                 right = genome_dict[chr].get_slice(stop + 1, stop + 401)
                 
-                if len(left) != 400:
+                if len(left) != flanking_number:
                     print('The left flanking sequence has length {}'.format(len(left)))
-                    padding = 'N' * (400 - len(left))
+                    padding = 'N' * (flanking_number - len(left))
                     left = padding + left
                 
-                if len(right) != 400:
+                if len(right) != flanking_number:
                     print('The right flanking sequence has length {}'.format(len(right)))
-                    padding = 'N' * (400 - len(right))
+                    padding = 'N' * (flanking_number - len(right))
                     right = right + padding
                 
                 padded_sequence = left + middle + right
-                assert (len(padded_sequence) == 1000)
+                assert (len(padded_sequence) == target_length)
                 print('Padded the sequence to {}'.format(padded_sequence))
                 opened_files[chr].write('>{}\n{}'.format(start, padded_sequence) + '\n')
                 continue
