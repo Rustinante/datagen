@@ -115,7 +115,7 @@ def narrowpeak_to_fa(filename):
         for chrom, start_coord_list in negative_coord_dict.items():
             for start_coord in start_coord_list:
                 # Writing chromosome name, start coordiante, stop coordinate
-                neg_coord_file.write(f'{chrom}, {start_coord}, {start_coord + target_seq_length}\n')
+                neg_coord_file.write(f'{chrom} {start_coord} {start_coord + target_seq_length}\n')
                 
     neg_seq_list, _ = convert_coord_to_seq_letters(negative_coord_filename, genome_dict)
     
