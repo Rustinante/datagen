@@ -109,7 +109,7 @@ def narrowpeak_to_fa(filename):
             test_posfile.write(f'>{chrom} {start}\n{test_seq}\n')
     
     print('\n=> Generating negative sequences')
-    negative_coord_dict = generate_negative_sequence_coord(positive_coord_dict, sizes, len(seq_list))
+    negative_coord_dict = generate_negative_sequence_coord(positive_coord_dict, sizes, len(seq_list), genome_dict)
 
     negative_coord_filename = 'uw_gm12878_ctcf.neg.coord'
     with open(negative_coord_filename, 'w') as neg_coord_file:
@@ -138,7 +138,7 @@ def narrowpeak_to_fa(filename):
             test_negfile.write(f'>{chrom} {start}\n{test_seq}\n')
         
 
-def generate_negative_sequence_coord(positive_coord_dict, chrom_sizes, num_samples_required):
+def generate_negative_sequence_coord(positive_coord_dict, chrom_sizes, num_samples_required, genome_dict):
     """
     :param positive_coord_dict: mapping chromosome name to a list of tuple of (start, end) of positive sequences, so that
     we do not samplee efrom those coordiantes.
@@ -170,10 +170,6 @@ def generate_negative_sequence_coord(positive_coord_dict, chrom_sizes, num_sampl
         
         print('=> Filtering coordinates that are too close')
         filter_close_coordinates(sampled_indices, target_seq_length)
-        sampled_indices = downsample(sampled_indices, num_samples)
-        
-        if len(sampled_indices) < num_samples:
-            raise ValueError('not enough number of indices after filtering out indices that are close together')
         
         print('=> Mapping sampled numbers back to the real coordinates')
         for index, start in enumerate(sampled_indices):
@@ -184,7 +180,23 @@ def generate_negative_sequence_coord(positive_coord_dict, chrom_sizes, num_sampl
                     start += increment
                 else:
                     break
+
+        current_index = len(sampled_indices) - 1
+        chrom_reader = genome_dict[chrom]
+        num_uncertain_samples = 0
+        while current_index >= 0:
+            start = sampled_indices[current_index]
+            if 'N' in chrom_reader.get_slice(start, start + target_seq_length):
+                sampled_indices.pop(current_index)
+                num_uncertain_samples += 1
+            current_index -= 1
+
+        print(f'-> Removed {num_uncertain_samples} potential sequences containing N')
         
+        if len(sampled_indices) < num_samples:
+            raise ValueError('not enough number of indices after filtering out indices that are close together')
+        
+        sampled_indices = downsample(sampled_indices, num_samples)
         sample_coord[chrom] = sampled_indices
     
         print('=> Mapping complete\n')
@@ -218,6 +230,8 @@ def filter_close_coordinates(sample_indices, min_distance):
 
 
 def downsample(samples, target_count):
+    if len(samples) < target_count:
+        raise ValueError(f'The number of elements in the samples {len(samples)} is less than the target_count {target_count}')
     target_indices = np.random.choice(len(samples), target_count, replace=False)
     return [samples[i] for i in target_indices]
 
