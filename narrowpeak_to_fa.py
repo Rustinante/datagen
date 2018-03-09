@@ -98,31 +98,6 @@ def narrowpeak_to_fa(filename):
     
     with open('uw_gm12878_ctcf.train.pos.fa', 'w') as train_posfile, \
             open('uw_gm12878_ctcf.test.pos.fa', 'w') as test_posfile:
-        # seq_list = []
-        # header_line_list = []
-        # for line_index, line in enumerate(narrow_file):
-        #     tokens = line.strip().split()
-        #     chrom, start, stop = tokens[0], int(tokens[1]), int(tokens[2])
-        #     seq_length = stop - start
-        #
-        #     if seq_length == target_seq_length:
-        #         dna_sequence = genome_dict[chrom].get_slice(start, stop)
-        #         if len(dna_sequence) != target_seq_length:
-        #             print(f'The DNA sequence is not {target_seq_length} bp in length starting Will skip')
-        #             print(f'chrom: {chrom} start: {start} stop: {stop}')
-        #             continue
-        #         seq_list.append(dna_sequence)
-        #         header_line_list.append(start)
-        #
-        #         # coordinates are left inclusive right exclusive
-        #         pos_coord_file.write('{} {} {}\n'.format(chrom, start, stop))
-        #
-        #         positive_coord_dict[chrom].append((start, stop))
-        #
-        #     if line_index % 1000 == 0:
-        #         print('=> {}/{} = {:.2f}%'.format(line_index, line_count, line_index / line_count * 100), end='\r')
-        #
-        # print('=> Processed {} lines from {}'.format(line_count, filename))
         
         print(f'=> Writing to uw_gm12878_ctcf.train.pos.fa')
         for train_seq, chrom, start, stop in positive_train_list:
@@ -132,6 +107,7 @@ def narrowpeak_to_fa(filename):
         for test_seq, chrom, start, stop in positive_test_list:
             test_posfile.write(f'>{chrom} {start}\n{test_seq}\n')
     
+    print('\n=> Generating negative sequences')
     negative_coord_dict = generate_negative_sequence_coord(positive_coord_dict, sizes, len(seq_list))
 
     negative_coord_filename = 'uw_gm12878_ctcf.neg.coord'
@@ -139,7 +115,7 @@ def narrowpeak_to_fa(filename):
         for chrom, start_coord_list in negative_coord_dict.items():
             for start_coord in start_coord_list:
                 # Writing chromosome name, start coordiante, stop coordinate
-                neg_coord_file.write(f'{chrom}, {start_coord}, {start_coord + target_seq_length}')
+                neg_coord_file.write(f'{chrom}, {start_coord}, {start_coord + target_seq_length}\n')
                 
     neg_seq_list, _ = convert_coord_to_seq_letters(negative_coord_filename, genome_dict)
     
@@ -151,6 +127,7 @@ def narrowpeak_to_fa(filename):
     neg_test_filename = 'uw_gm12878_ctcf.test.neg.fa'
     with open(neg_train_filename, 'w') as train_negfile, \
             open(neg_test_filename, 'w') as test_negfile:
+        
         print(f'=> Writing to {neg_train_filename}')
         for train_seq, chrom, start, stop in neg_train_list:
             train_negfile.write(f'>{chrom} {start}\n{train_seq}\n')
@@ -168,7 +145,7 @@ def generate_negative_sequence_coord(positive_coord_dict, chrom_sizes, num_sampl
     :param num_samples_required: total number of negative samples required.
     """
     total_num_coordinates = sum(chrom_sizes.values())
-    print(f'total num corodiantes: {total_num_coordinates}')
+    print(f'-> Total number of coordinates: {total_num_coordinates}')
     sample_coord = {}
     
     for chrom, positive_seq_start_stop_list in positive_coord_dict.items():
@@ -178,18 +155,19 @@ def generate_negative_sequence_coord(positive_coord_dict, chrom_sizes, num_sampl
         forbidden_coord_list.sort(key=lambda start_stop_tuple: start_stop_tuple[0])
         
         upper_bound = chrom_sizes[chrom]
-        print(f'chrom {chrom} has max coordinate: {upper_bound}')
+        print(f'-> Chromosome {chrom} has max coordinate: {upper_bound}')
         
         for start, stop in forbidden_coord_list:
             assert start < stop
             upper_bound -= stop - start
-        print(f'upper bound changed to: {upper_bound}')
+        print(f'-> Upper bound changed to: {upper_bound} in the mapping range')
         
         num_samples = int(num_samples_required * chrom_sizes[chrom] / total_num_coordinates)
         # sample twice the amount and get rid of indices that are too close together
         # Then resample one more time to make the length become num_samples
-        sampled_indices = np.random.choice(upper_bound, num_samples * 2, replace=False)
+        sampled_indices = list(np.random.choice(upper_bound, num_samples * 2, replace=False))
         
+        print('=> Filtering coordinates that are too close')
         filter_close_coordinates(sampled_indices, target_seq_length)
         sampled_indices = downsample(sampled_indices, num_samples)
         
@@ -208,7 +186,7 @@ def generate_negative_sequence_coord(positive_coord_dict, chrom_sizes, num_sampl
         
         sample_coord[chrom] = sampled_indices
     
-    print('\n=> Mapping complete')
+        print('=> Mapping complete\n')
     
     return sample_coord
 
@@ -247,4 +225,4 @@ if __name__ == '__main__':
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument('filename')
     args = arg_parser.parse_args()
-    d = narrowpeak_to_fa(args.filename)
+    narrowpeak_to_fa(args.filename)
