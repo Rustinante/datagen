@@ -3,7 +3,6 @@ import numpy as np
 import twobitreader
 from collections import defaultdict
 
-dirname = 'uw_gm12878_ctcf'
 
 sizes = {
     'chr1': 249250621,
@@ -32,7 +31,6 @@ sizes = {
     'chr21': 48129895
 }
 
-padding_each_side = 0
 target_seq_length = 250
 
 
