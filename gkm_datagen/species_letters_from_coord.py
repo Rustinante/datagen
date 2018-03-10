@@ -25,16 +25,19 @@ def get_alignment_filename(chrom):
 
 
 def open_alignment_files():
-    filenames = [get_alignment_filename(chrom) for chrom in list(range(1, 22)) + ['chrX']]
+    def convert_number_to_chrom_str(number):
+        return 'chr' + str(number)
+    
+    filenames = [(get_alignment_filename(chrom), chrom) for chrom in list(map(convert_number_to_chrom_str,range(1, 22))) + ['chrX']]
     print(f'filenames: {filenames!r}')
     file_dict = {}
     species_header = None
-    for name in filenames:
-        file = open(name, 'r')
+    for filename, chrom in filenames:
+        file = open(filename, 'r')
         header = file.readline().strip().split(',')
         del header[0]
         assert len(header) == 100
-        file_dict[name] = file
+        file_dict[chrom] = file
         
         species_header = header
     
