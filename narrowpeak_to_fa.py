@@ -139,7 +139,7 @@ def narrowpeak_to_fa(filename):
 def generate_negative_sequence_coord(positive_coord_dict, chrom_sizes, num_samples_required, genome_dict):
     """
     :param positive_coord_dict: mapping chromosome name to a list of tuple of (start, end) of positive sequences, so that
-    we do not samplee efrom those coordiantes.
+    we do not sample from those coordiantes.
     :param chrom_sizes: mapping chromosome name to their sizes
     :param num_samples_required: total number of negative samples required.
     """

@@ -20,3 +20,5 @@ fasta_data/
 hg19_*
 *.coord
 *.narrowPeak
+temp4.py
+*.fa

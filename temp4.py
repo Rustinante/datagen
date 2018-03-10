@@ -1,11 +1,11 @@
 from subprocess import check_call
 
 # http://hgdownload.cse.ucsc.edu/goldenPath/hg19/encodeDCC/wgEncodeAwgTfbsUniform/wgEncodeAwgTfbsBroadGm12878CtcfUniPk.narrowPeak.gz
-# label_index = 126
+label_index = 126
 # label_index = 725
-label_index = 0
+#label_index = 0
 
-check_call(['python3', 'gkm_datagen/split_pos_neg_for_gkm.py', 'chr1', 'train', str(label_index)])
+# check_call(['python3', 'gkm_datagen/split_pos_neg_for_gkm.py', 'chr1', 'train', str(label_index)])
 # check_call(['python3', 'gkm_datagen/split_pos_neg_for_gkm.py', 'chr2', 'train', str(label_index)])
 # check_call(['python3', 'gkm_datagen/split_pos_neg_for_gkm.py', 'chr3', 'train', str(label_index)])
 # check_call(['python3', 'gkm_datagen/split_pos_neg_for_gkm.py', 'chr4', 'train', str(label_index)])
