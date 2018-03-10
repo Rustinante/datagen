@@ -6,7 +6,7 @@ import time
 
 from collections import defaultdict
 
-from binary_search import search, get_location_from_line, scan_through_line_for_number
+from binary_search import search, scan_through_line_for_number
 
 from LineCache import LineCache
 
