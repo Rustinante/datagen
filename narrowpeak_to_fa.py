@@ -64,7 +64,7 @@ def convert_coord_to_seq_letters(narrow_filename, genome_dict):
                 coord_dict[chrom].append((start, stop))
             
             if line_index % 1000 == 0:
-                print('=> {}/{} = {:.2f}%'.format(line_index, line_count, line_index / line_count * 100), end='\r')
+                print(f'=> {line_index}/{line_count} = {line_index / line_count:.2%}')
         
         print(f'\n=> Processed {line_count} lines from {narrow_filename}')
     
@@ -88,7 +88,7 @@ def narrowpeak_to_fa(filename):
     with open('uw_gm12878_ctcf.pos.coord', 'w') as pos_coord_file:
         # coordinates are left inclusive right exclusive
         for _, chrom, start, stop in seq_list:
-            pos_coord_file.write('{} {} {}\n'.format(chrom, start, stop))
+            pos_coord_file.write(f'{chrom} {start} {stop}\n')
     
     positive_train_list, positive_test_list = take_random_split(seq_list, test_ratio)
     
