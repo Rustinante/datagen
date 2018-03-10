@@ -61,7 +61,7 @@ def get_species_letters_from_coord(coord_filename, purpose):
     
     total_line_count = get_line_count(coord_filename)
     
-    dir_name = f'gkm_fasta_{purpose}_{coord_filename}_mult_species'
+    dir_name = f'{coord_filename}.{purpose}.mult_species'
     os.makedirs(dir_name, exist_ok=True)
     
     alignment_file_dict, header = open_alignment_files()
