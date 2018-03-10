@@ -6,31 +6,9 @@ import time
 
 from collections import defaultdict
 
-from binary_search import search, get_location_from_line
+from binary_search import search, get_location_from_line, scan_through_line_for_number
 
 from LineCache import LineCache
-
-
-def scan_through_line_for_number(alignment_file, start_line_hint, number):
-    alignment_file.seek(start_line_hint)
-    
-    for line in alignment_file:
-        location = get_location_from_line(line)
-        
-        if not location:
-            raise ValueError('There still lines in the alignment file but cannot obtain coordinate location')
-        
-        if location == number:
-            return line, start_line_hint
-        
-        # The lines are sorted so if the current location is already greater than the one
-        # we're searching for we know what we search does not exist.
-        elif location > number:
-            return None
-        
-        start_line_hint += len(bytes(line, 'ascii'))
-    
-    return None
 
 
 def get_line_count(filename):
