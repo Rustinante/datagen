@@ -3,7 +3,6 @@ import numpy as np
 import twobitreader
 from collections import defaultdict
 
-
 sizes = {
     'chr1': 249250621,
     'chr2': 243199373,
@@ -79,62 +78,69 @@ def take_random_split(datapoints, second_segment_ratio):
     return first_segment, second_segment
 
 
-def narrowpeak_to_fa(filename):
+def narrowpeak_to_fa(filename, output_prefix):
     test_ratio = 0.2
     genome_dict = twobitreader.TwoBitFile('hg19.2bit')
     
-    seq_list, positive_coord_dict = convert_coord_to_seq_letters(filename, genome_dict)
+    positive_seq_tuple_list, positive_coord_dict = convert_coord_to_seq_letters(filename, genome_dict)
     
-    with open('uw_gm12878_ctcf.pos.coord', 'w') as pos_coord_file:
+    with open(f'{output_prefix}.pos.coord', 'w') as pos_coord_file:
         # coordinates are left inclusive right exclusive
-        for _, chrom, start, stop in seq_list:
+        for _, chrom, start, stop in positive_seq_tuple_list:
             pos_coord_file.write(f'{chrom} {start} {stop}\n')
     
-    positive_train_list, positive_test_list = take_random_split(seq_list, test_ratio)
+    positive_train_list, positive_test_list = take_random_split(positive_seq_tuple_list, test_ratio)
     
     print(f'positive_train_list length: {len(positive_train_list)}\n'
           f'positive_test_list length: {len(positive_test_list)}')
     
-    with open('uw_gm12878_ctcf.train.pos.fa', 'w') as train_posfile, \
-            open('uw_gm12878_ctcf.test.pos.fa', 'w') as test_posfile:
+    with open(f'{output_prefix}.train.pos.fa', 'w') as train_posfile, \
+            open(f'{output_prefix}.train.pos.coord', 'w') as train_pos_coord_file, \
+            open(f'{output_prefix}.test.pos.fa', 'w') as test_posfile, \
+            open(f'{output_prefix}.test.pos.coord', 'w') as test_pos_coord_file:
         
-        print(f'=> Writing to uw_gm12878_ctcf.train.pos.fa')
+        print(f'=> Writing to {train_posfile.name} and {train_pos_coord_file.name}')
         for train_seq, chrom, start, stop in positive_train_list:
             train_posfile.write(f'>{chrom} {start} {stop}\n{train_seq}\n')
+            train_pos_coord_file.write(f'{chrom} {start} {stop}\n')
         
-        print('=> Writing to uw_gm12878_ctcf.test.pos.fa')
+        print(f'=> Writing to {test_posfile.name} and {test_pos_coord_file.name}')
         for test_seq, chrom, start, stop in positive_test_list:
             test_posfile.write(f'>{chrom} {start} {stop}\n{test_seq}\n')
+            test_pos_coord_file.write(f'{chrom} {start} {stop}\n')
     
     print('\n=> Generating negative sequences')
-    negative_coord_dict = generate_negative_sequence_coord(positive_coord_dict, sizes, len(seq_list), genome_dict)
-
-    negative_coord_filename = 'uw_gm12878_ctcf.neg.coord'
+    negative_coord_dict = generate_negative_sequence_coord(positive_coord_dict, sizes, len(positive_seq_tuple_list),
+                                                           genome_dict)
+    
+    negative_coord_filename = f'{output_prefix}.neg.coord'
     with open(negative_coord_filename, 'w') as neg_coord_file:
         for chrom, start_coord_list in negative_coord_dict.items():
             for start_coord in start_coord_list:
                 # Writing chromosome name, start coordiante, stop coordinate
                 neg_coord_file.write(f'{chrom} {start_coord} {start_coord + target_seq_length}\n')
-                
-    neg_seq_list, _ = convert_coord_to_seq_letters(negative_coord_filename, genome_dict)
     
-    neg_train_list, neg_test_list = take_random_split(neg_seq_list, test_ratio)
+    neg_seq_tuple_list, _ = convert_coord_to_seq_letters(negative_coord_filename, genome_dict)
+    
+    neg_train_list, neg_test_list = take_random_split(neg_seq_tuple_list, test_ratio)
     print(f'negative_train_list length: {len(neg_train_list)}\n'
           f'negative_test_list length: {len(neg_test_list)}')
     
-    neg_train_filename = 'uw_gm12878_ctcf.train.neg.fa'
-    neg_test_filename = 'uw_gm12878_ctcf.test.neg.fa'
-    with open(neg_train_filename, 'w') as train_negfile, \
-            open(neg_test_filename, 'w') as test_negfile:
+    with open(f'{output_prefix}.train.neg.fa', 'w') as train_negfile, \
+            open(f'{output_prefix}.train.neg.coord', 'w') as train_neg_coord_file, \
+            open(f'{output_prefix}.test.neg.fa', 'w') as test_negfile, \
+            open(f'{output_prefix}.test.neg.coord', 'w') as test_neg_coord_file:
         
-        print(f'=> Writing to {neg_train_filename}')
+        print(f'=> Writing to {train_negfile.name} and {train_neg_coord_file.name}')
         for train_seq, chrom, start, stop in neg_train_list:
             train_negfile.write(f'>{chrom} {start} {stop}\n{train_seq}\n')
-            
-        print(f'=> Writing to {neg_test_filename}')
+            train_neg_coord_file.write(f'{chrom} {start} {stop}\n')
+        
+        print(f'=> Writing to {test_negfile.name} and {test_neg_coord_file.name}')
         for test_seq, chrom, start, stop in neg_test_list:
             test_negfile.write(f'>{chrom} {start} {stop}\n{test_seq}\n')
-        
+            test_neg_coord_file.write(f'{chrom} {start} {stop}\n')
+
 
 def generate_negative_sequence_coord(positive_coord_dict, chrom_sizes, num_samples_required, genome_dict):
     """
@@ -178,7 +184,7 @@ def generate_negative_sequence_coord(positive_coord_dict, chrom_sizes, num_sampl
                     start += increment
                 else:
                     break
-
+        
         current_index = len(sampled_indices) - 1
         chrom_reader = genome_dict[chrom]
         num_uncertain_samples = 0
@@ -188,7 +194,7 @@ def generate_negative_sequence_coord(positive_coord_dict, chrom_sizes, num_sampl
                 sampled_indices.pop(current_index)
                 num_uncertain_samples += 1
             current_index -= 1
-
+        
         print(f'-> Removed {num_uncertain_samples} potential sequences containing N')
         
         if len(sampled_indices) < num_samples:
@@ -196,7 +202,7 @@ def generate_negative_sequence_coord(positive_coord_dict, chrom_sizes, num_sampl
         
         sampled_indices = downsample(sampled_indices, num_samples)
         sample_coord[chrom] = sampled_indices
-    
+        
         print('=> Mapping complete\n')
     
     return sample_coord
@@ -229,7 +235,8 @@ def filter_close_coordinates(sample_indices, min_distance):
 
 def downsample(samples, target_count):
     if len(samples) < target_count:
-        raise ValueError(f'The number of elements in the samples {len(samples)} is less than the target_count {target_count}')
+        raise ValueError(
+            f'The number of elements in the samples {len(samples)} is less than the target_count {target_count}')
     target_indices = np.random.choice(len(samples), target_count, replace=False)
     return [samples[i] for i in target_indices]
 
@@ -237,5 +244,7 @@ def downsample(samples, target_count):
 if __name__ == '__main__':
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument('filename')
+    arg_parser.add_argument('output_prefix')
     args = arg_parser.parse_args()
-    narrowpeak_to_fa(args.filename)
+    # example output_prefix uw_gm12878_ctcf
+    narrowpeak_to_fa(args.filename, args.output_prefix)
