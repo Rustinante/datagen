@@ -63,7 +63,7 @@ def convert_coord_to_seq_letters(narrow_filename, genome_dict):
                 coord_dict[chrom].append((start, stop))
             
             if line_index % 1000 == 0:
-                print(f'=> {line_index}/{line_count} = {line_index / line_count:.2%}')
+                print(f'=> {line_index}/{line_count} = {line_index / line_count:.2%}', end='\r')
         
         print(f'\n=> Processed {line_count} lines from {narrow_filename}')
     
