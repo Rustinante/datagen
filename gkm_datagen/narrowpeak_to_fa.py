@@ -100,11 +100,11 @@ def narrowpeak_to_fa(filename):
         
         print(f'=> Writing to uw_gm12878_ctcf.train.pos.fa')
         for train_seq, chrom, start, stop in positive_train_list:
-            train_posfile.write(f'>{chrom} {start}\n{train_seq}\n')
+            train_posfile.write(f'>{chrom} {start} {stop}\n{train_seq}\n')
         
         print('=> Writing to uw_gm12878_ctcf.test.pos.fa')
         for test_seq, chrom, start, stop in positive_test_list:
-            test_posfile.write(f'>{chrom} {start}\n{test_seq}\n')
+            test_posfile.write(f'>{chrom} {start} {stop}\n{test_seq}\n')
     
     print('\n=> Generating negative sequences')
     negative_coord_dict = generate_negative_sequence_coord(positive_coord_dict, sizes, len(seq_list), genome_dict)
@@ -129,11 +129,11 @@ def narrowpeak_to_fa(filename):
         
         print(f'=> Writing to {neg_train_filename}')
         for train_seq, chrom, start, stop in neg_train_list:
-            train_negfile.write(f'>{chrom} {start}\n{train_seq}\n')
+            train_negfile.write(f'>{chrom} {start} {stop}\n{train_seq}\n')
             
         print(f'=> Writing to {neg_test_filename}')
         for test_seq, chrom, start, stop in neg_test_list:
-            test_negfile.write(f'>{chrom} {start}\n{test_seq}\n')
+            test_negfile.write(f'>{chrom} {start} {stop}\n{test_seq}\n')
         
 
 def generate_negative_sequence_coord(positive_coord_dict, chrom_sizes, num_samples_required, genome_dict):
