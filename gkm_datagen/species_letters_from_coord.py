@@ -54,16 +54,16 @@ def get_species_letters_from_coord(coord_filename):
     checkpoint_time_str = time.strftime('%a %b %d %Y %H:%M:%S UTC%z', time.localtime(time.time()))
     print('Current time: {}'.format(checkpoint_time_str))
     
+    dir_name = f'{coord_filename}.mult_species'
+    os.makedirs(dir_name, exist_ok=False)
+    
     cache = LineCache()
     
     species_file_dict = {}
     
-    print(f'=> coordinate_filename: {coord_filename}')
-    
     total_line_count = get_line_count(coord_filename)
-    
-    dir_name = f'{coord_filename}.mult_species'
-    os.makedirs(dir_name, exist_ok=False)
+    print(f'=> coordinate_filename: {coord_filename}\n'
+          f'-> {coord_filename} has {total_line_count} lines')
     
     alignment_file_dict, header = open_alignment_files()
     
