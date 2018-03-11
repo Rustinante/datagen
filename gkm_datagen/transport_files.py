@@ -5,10 +5,10 @@ import numpy as np
 
 
 def downsample(in_filename, out_filename, out_ratio):
-    print(f'\n=> Downsampling...\n'
-          f'in_filename: {in_filename}\n'
-          f'out_filename: {out_filename}\n'
-          f'out_ratio: {out_ratio}')
+    # print(f'\n=> Downsampling...\n'
+    #       f'in_filename: {in_filename}\n'
+    #       f'out_filename: {out_filename}\n'
+    #       f'out_ratio: {out_ratio}')
     with open(in_filename, 'r') as infile, open(out_filename, 'w') as outfile:
         keep = True
         for index, line in enumerate(infile):
@@ -37,6 +37,8 @@ def transport_files(target_dirname, downsample_ratio):
             
             if should_downsample:
                 target_sub_dirname = os.path.join(target_dirname, source_sub_dirname + f'.at{downsample_ratio:.2f}')
+                source_downsample_sub_dirname = source_sub_dirname + f'.at{downsample_ratio:.2f}'
+                os.makedirs(source_downsample_sub_dirname, exist_ok=False)
             else:
                 target_sub_dirname = os.path.join(target_dirname, source_sub_dirname)
                 
@@ -52,7 +54,7 @@ def transport_files(target_dirname, downsample_ratio):
                     source_filepath = os.path.join(source_sub_dirname, filename)
                     
                     if should_downsample:
-                        downsampled_filepath = os.path.join(source_sub_dirname, filename + f'.at{downsample_ratio:.2f}')
+                        downsampled_filepath = os.path.join(source_downsample_sub_dirname, filename + f'.at{downsample_ratio:.2f}')
                         downsample(source_filepath, downsampled_filepath, 0.2)
                         
                         print(f'=> Copying {downsampled_filepath} to {target_filepath}')
