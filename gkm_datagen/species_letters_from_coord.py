@@ -28,8 +28,9 @@ def open_alignment_files():
     def convert_number_to_chrom_str(number):
         return 'chr' + str(number)
     
-    filenames = [(get_alignment_filename(chrom), chrom) for chrom in list(map(convert_number_to_chrom_str,range(1, 22))) + ['chrX']]
-    print(f'filenames: {filenames!r}')
+    filenames = [(get_alignment_filename(chrom), chrom) for chrom in
+                 list(map(convert_number_to_chrom_str, range(1, 22))) + ['chrX']]
+    print(f'-> alignment filenames: {filenames!r}')
     file_dict = {}
     species_header = None
     for filename, chrom in filenames:
@@ -127,7 +128,7 @@ def get_species_letters_from_coord(coord_filename, purpose):
     for filename, species_file in species_file_dict.items():
         print(f'=> Closing {filename}')
         species_file.close()
-        
+    
     close_alignment_files(alignment_file_dict)
     
     print('=> Done!')
