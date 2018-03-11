@@ -50,7 +50,7 @@ def close_alignment_files(file_dict):
         file.close()
 
 
-def get_species_letters_from_coord(coord_filename, purpose):
+def get_species_letters_from_coord(coord_filename):
     checkpoint_time_str = time.strftime('%a %b %d %Y %H:%M:%S UTC%z', time.localtime(time.time()))
     print('Current time: {}'.format(checkpoint_time_str))
     
@@ -62,14 +62,14 @@ def get_species_letters_from_coord(coord_filename, purpose):
     
     total_line_count = get_line_count(coord_filename)
     
-    dir_name = f'{coord_filename}.{purpose}.mult_species'
+    dir_name = f'{coord_filename}.mult_species'
     os.makedirs(dir_name, exist_ok=True)
     
     alignment_file_dict, header = open_alignment_files()
     
     with open(coord_filename, 'r') as coord_file:
         for index, species_code in enumerate(header):
-            species_filename = f'{index}_{species_code}_{purpose}.fa'
+            species_filename = f'{index}_{species_code}.fa'
             print('=> Creating {} under {}'.format(species_filename, dir_name))
             species_file_dict[index] = open(os.path.join(dir_name, species_filename), 'w')
         
@@ -137,6 +137,5 @@ def get_species_letters_from_coord(coord_filename, purpose):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('coord_file')
-    parser.add_argument('purpose')
     args = parser.parse_args()
-    get_species_letters_from_coord(args.coord_file, args.purpose)
+    get_species_letters_from_coord(args.coord_file)
