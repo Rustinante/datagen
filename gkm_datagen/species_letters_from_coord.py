@@ -29,7 +29,7 @@ def open_alignment_files():
         return 'chr' + str(number)
     
     filenames = [(get_alignment_filename(chrom), chrom) for chrom in
-                 list(map(convert_number_to_chrom_str, range(1, 22))) + ['chrX']]
+                 list(map(convert_number_to_chrom_str, range(1, 23))) + ['chrX']]
     print(f'-> alignment filenames: {filenames!r}')
     file_dict = {}
     species_header = None
