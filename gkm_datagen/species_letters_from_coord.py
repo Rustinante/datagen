@@ -63,7 +63,7 @@ def get_species_letters_from_coord(coord_filename):
     total_line_count = get_line_count(coord_filename)
     
     dir_name = f'{coord_filename}.mult_species'
-    os.makedirs(dir_name, exist_ok=True)
+    os.makedirs(dir_name, exist_ok=False)
     
     alignment_file_dict, header = open_alignment_files()
     
