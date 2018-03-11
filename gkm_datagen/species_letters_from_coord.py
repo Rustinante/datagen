@@ -75,6 +75,7 @@ def get_species_letters_from_coord(coord_filename):
         
         processed_line_count = 0
         start_time = time.time()
+        number_of_n_substituted = 0
         
         for line in coord_file:
             processed_line_count += 1
@@ -110,8 +111,7 @@ def get_species_letters_from_coord(coord_filename):
                     cache[coordinate] = (tokens, start_line_hint)
                 
                 else:
-                    print(f'Failed to find the letters at coordinate {coordinate}. '
-                          f'Substituting with N instead')
+                    number_of_n_substituted += 1
                     tokens = ['N'] * (stop_coord - start_coord)
                     distribute_tokens_to_species_sequence(tokens, species_sequence)
             
@@ -131,7 +131,8 @@ def get_species_letters_from_coord(coord_filename):
     
     close_alignment_files(alignment_file_dict)
     
-    print('=> Done!')
+    print(f'-> #N substituted: {number_of_n_substituted}\n'
+          f'=> Done!')
 
 
 if __name__ == '__main__':
