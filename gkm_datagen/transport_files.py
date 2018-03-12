@@ -28,8 +28,8 @@ def downsample(in_filename, out_filename, downsample_coord_filename):
         for line in coord_file:
             chrom, start, stop = map_line_to_coord_triple(line)
             coord_set.add((chrom, start, stop))
-            
-    with open(in_filename, 'r') as infile,  open(out_filename, 'w') as outfile:
+    
+    with open(in_filename, 'r') as infile, open(out_filename, 'w') as outfile:
         for index, line in enumerate(infile):
             if map_line_to_coord_triple(line) in coord_set:
                 outfile.write(line)
@@ -46,7 +46,7 @@ def create_target_filename(filename, purpose, label):
 
 def get_filename_with_downsample_suffix(filename, downsample_ratio):
     return f'{filename}.at{downsample_ratio:.2f}'
-    
+
 
 def generate_downsample_coord(coord_filename, out_ratio):
     print(f'=> Downdsampling coordinates from {coord_filename}')
@@ -57,11 +57,11 @@ def generate_downsample_coord(coord_filename, out_ratio):
         for line_index, line in enumerate(file):
             if line_index in out_indices:
                 outfile.write(line)
-                
+    
     print(f'-> Downsampled coordinates saved to {downsample_coord_filename}')
     
     return downsample_coord_filename
-    
+
 
 def transport_files(target_dirname, downsample_ratio):
     """
@@ -71,7 +71,7 @@ def transport_files(target_dirname, downsample_ratio):
     purpose_list = ['train', 'test']
     label_list = ['pos', 'neg']
     should_downsample = downsample_ratio < 1
-
+    
     os.chdir('uw_gm12878_ctcf')
     for purpose in purpose_list:
         for label in label_list:
@@ -89,9 +89,11 @@ def transport_files(target_dirname, downsample_ratio):
                 downsampled_coord_filename = generate_downsample_coord(f'uw_gm12878_ctcf.{purpose}.{label}.coord', downsample_ratio)
             else:
                 target_sub_dirname = os.path.join(target_dirname, source_sub_dirname)
-                
+            
             print(f'\n=> Creating target subdirectory with target_sub_dirname: {target_sub_dirname}')
             os.makedirs(target_sub_dirname, exist_ok=False)
+            
+            shutil.copyfile(downsampled_coord_filename, os.path.join(target_sub_dirname, downsampled_coord_filename))
             
             source_subdir_files = os.listdir(source_sub_dirname)
             print(f'=> Source subdirectory: {source_sub_dirname}')
@@ -108,11 +110,11 @@ def transport_files(target_dirname, downsample_ratio):
                         
                         print(f'=> Copying {source_downsampled_filepath} to {target_filepath}')
                         shutil.copyfile(source_downsampled_filepath, target_filepath)
-                        
+                    
                     else:
                         print(f'=> Copying {source_filepath} to {target_filepath}')
                         shutil.copyfile(source_filepath, target_filepath)
-                    
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
