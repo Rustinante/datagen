@@ -117,9 +117,10 @@ def transport_files(target_dirname, downsample_ratio):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('target_dirname')
-    parser.add_argument('-d', '--downsample', type=float, default=1)
+    parser = argparse.ArgumentParser(usage='To be called directly with python3 transport_files.py and not as a module with the -m option.')
+    parser.add_argument('target_dirname', help='The target directory to copy data to.')
+    parser.add_argument('-d', '--downsample', type=float, default=1, metavar='OUT_RATIO',
+                        help='The ratio of the desired number of downsampled data points against the total number of data points.')
     args = parser.parse_args()
     # /Users/aaron/lsgkm/tests
     transport_files(args.target_dirname, downsample_ratio=args.downsample)
