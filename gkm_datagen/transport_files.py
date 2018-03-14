@@ -31,8 +31,10 @@ def downsample(in_filename, out_filename, downsample_coord_filename):
     
     with open(in_filename, 'r') as infile, open(out_filename, 'w') as outfile:
         for index, line in enumerate(infile):
-            if map_line_to_coord_triple(line) in coord_set:
-                outfile.write(line)
+            triple = map_line_to_coord_triple(line)
+            if triple in coord_set:
+                chrom, start, stop = triple
+                outfile.write(f'>{chrom}:{start}-{stop}\n')
                 outfile.write(infile.readline())
             else:
                 # Discard the current line and the next line
@@ -70,7 +72,8 @@ def transport_files(target_dirname, downsample_ratio):
     """
     purpose_list = ['train', 'test']
     label_list = ['pos', 'neg']
-    should_downsample = downsample_ratio < 1
+    # should_downsample = downsample_ratio < 1
+    should_downsample = True
     
     os.chdir('uw_gm12878_ctcf')
     for purpose in purpose_list:
@@ -93,7 +96,8 @@ def transport_files(target_dirname, downsample_ratio):
             print(f'\n=> Creating target subdirectory with target_sub_dirname: {target_sub_dirname}')
             os.makedirs(target_sub_dirname, exist_ok=False)
             
-            shutil.copyfile(downsampled_coord_filename, os.path.join(target_sub_dirname, downsampled_coord_filename))
+            if should_downsample:
+                shutil.copyfile(downsampled_coord_filename, os.path.join(target_sub_dirname, downsampled_coord_filename))
             
             source_subdir_files = os.listdir(source_sub_dirname)
             print(f'=> Source subdirectory: {source_sub_dirname}')
