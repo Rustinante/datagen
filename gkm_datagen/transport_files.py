@@ -65,39 +65,38 @@ def generate_downsample_coord(coord_filename, out_ratio):
     return downsample_coord_filename
 
 
-def transport_files(target_dirname, downsample_ratio):
+def transport_files(source_dirname, target_dirname, downsample_ratio):
     """
+    :param source_dirname: can be a relative path or an absolute path
+    :param target_dirname: an absolute path
     :param downsample_ratio: the ratio of the output to the total number of samples
-    :param target_dirname: an abosolute path
     """
     purpose_list = ['train', 'test']
     label_list = ['pos', 'neg']
-    # should_downsample = downsample_ratio < 1
-    should_downsample = True
     
-    os.chdir('uw_gm12878_ctcf')
+    original_dirname = os.getcwd()
+    print(f'=> Changing the current working directory to {source_dirname}')
+    os.chdir(source_dirname)
+    src_dir_basename = os.path.basename(os.path.normpath(source_dirname))
+    
     for purpose in purpose_list:
         for label in label_list:
-            source_sub_dirname = f'uw_gm12878_ctcf.{purpose}.{label}.coord.mult_species'
+            source_sub_dirname = f'{src_dir_basename}.{purpose}.{label}.coord.mult_species'
             
-            if should_downsample:
-                target_sub_dirname = os.path.join(
-                    target_dirname,
-                    get_filename_with_downsample_suffix(source_sub_dirname, downsample_ratio))
-                
-                # We will save the downsampled data to source_downsample_sub_dirname before copying them
-                # to the target subdirectory target_sub_dirname
-                source_downsample_sub_dirname = get_filename_with_downsample_suffix(source_sub_dirname, downsample_ratio)
-                os.makedirs(source_downsample_sub_dirname, exist_ok=False)
-                downsampled_coord_filename = generate_downsample_coord(f'uw_gm12878_ctcf.{purpose}.{label}.coord', downsample_ratio)
-            else:
-                target_sub_dirname = os.path.join(target_dirname, source_sub_dirname)
+            target_sub_dirname = os.path.join(
+                target_dirname,
+                get_filename_with_downsample_suffix(source_sub_dirname, downsample_ratio))
+            
+            # We will save the downsampled data to source_downsample_sub_dirname before copying them
+            # to the target subdirectory target_sub_dirname
+            source_downsample_sub_dirname = get_filename_with_downsample_suffix(source_sub_dirname, downsample_ratio)
+            os.makedirs(source_downsample_sub_dirname, exist_ok=False)
+            downsampled_coord_filename = generate_downsample_coord(f'{src_dir_basename}.{purpose}.{label}.coord', downsample_ratio)
             
             print(f'\n=> Creating target subdirectory with target_sub_dirname: {target_sub_dirname}')
             os.makedirs(target_sub_dirname, exist_ok=False)
             
-            if should_downsample:
-                shutil.copyfile(downsampled_coord_filename, os.path.join(target_sub_dirname, downsampled_coord_filename))
+            shutil.copyfile(downsampled_coord_filename, os.path.join(target_sub_dirname, downsampled_coord_filename))
             
             source_subdir_files = os.listdir(source_sub_dirname)
             print(f'=> Source subdirectory: {source_sub_dirname}')
@@ -109,25 +108,27 @@ def transport_files(target_dirname, downsample_ratio):
                                                    create_target_filename(filename[:-suffix_len - 1], purpose, label))
                     source_filepath = os.path.join(source_sub_dirname, filename)
                     
-                    if should_downsample:
-                        source_downsampled_filepath = os.path.join(source_downsample_sub_dirname,
-                                                                   get_filename_with_downsample_suffix(filename, downsample_ratio))
-                        downsample(source_filepath, source_downsampled_filepath, downsampled_coord_filename)
-                        
-                        print(f'=> Copying {source_downsampled_filepath} to {target_filepath}')
-                        shutil.copyfile(source_downsampled_filepath, target_filepath)
+                    source_downsampled_filepath = os.path.join(source_downsample_sub_dirname,
+                                                               get_filename_with_downsample_suffix(filename, downsample_ratio))
+                    downsample(source_filepath, source_downsampled_filepath, downsampled_coord_filename)
                     
-                    else:
-                        print(f'=> Copying {source_filepath} to {target_filepath}')
-                        shutil.copyfile(source_filepath, target_filepath)
+                    print(f'=> Copying {source_downsampled_filepath} to {target_filepath}')
+                    shutil.copyfile(source_downsampled_filepath, target_filepath)
+                    
+    print(f'=> Changing the working directory back to {original_dirname}')
+    os.chdir(original_dirname)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         usage='To be called directly with python3 transport_files.py and not as a module with the -m option.')
+    parser.add_argument('source_dirname', help='The top level directory to copy from')
     parser.add_argument('target_dirname', help='The target directory to copy data to.')
     parser.add_argument('-d', '--downsample', type=float, default=1, metavar='OUT_RATIO',
                         help='The ratio of the desired number of downsampled data points against the total number of data points.')
     args = parser.parse_args()
+    if args.target_dirname[0] != '/':
+        print(f'target dirname must be an absolute path')
+        exit(1)
     # /Users/aaron/lsgkm/tests
-    transport_files(args.target_dirname, downsample_ratio=args.downsample)
+    transport_files(args.source_dirname, args.target_dirname, downsample_ratio=args.downsample)
