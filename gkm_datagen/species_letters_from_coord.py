@@ -65,12 +65,9 @@ def get_species_letters_from_coord(coord_filename, target_dirname):
     alignment_file_dict, header = open_alignment_files()
 
     with open(coord_filename, 'r') as coord_file:
-        original_dir = os.getcwd()
-        print(f'=> Changing the current working directory to {target_dirname}')
-        os.chdir(target_dirname)
-        
-        dir_name = f'{coord_filename}.mult_species'
+        dir_name = os.path.join(target_dirname, f'{os.path.basename(os.path.normpath(coord_filename))}.mult_species')
         os.makedirs(dir_name, exist_ok=False)
+        
         for index, species_code in enumerate(header):
             species_filename = f'{index}_{species_code}.fa.ir'
             print('=> Creating {} under {}'.format(species_filename, dir_name))
@@ -134,9 +131,6 @@ def get_species_letters_from_coord(coord_filename, target_dirname):
     
     close_alignment_files(alignment_file_dict)
 
-    print(f'=> Changing back to the original directory {original_dir}')
-    os.chdir(original_dir)
-    
     print(f'-> #N substituted: {number_of_n_substituted}\n'
           f'=> Done!')
 
