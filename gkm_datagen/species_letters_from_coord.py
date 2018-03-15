@@ -50,13 +50,10 @@ def close_alignment_files(file_dict):
         file.close()
 
 
-def get_species_letters_from_coord(coord_filename):
+def get_species_letters_from_coord(coord_filename, target_dirname):
     checkpoint_time_str = time.strftime('%a %b %d %Y %H:%M:%S UTC%z', time.localtime(time.time()))
     print('Current time: {}'.format(checkpoint_time_str))
-    
-    dir_name = f'{coord_filename}.mult_species'
-    os.makedirs(dir_name, exist_ok=False)
-    
+
     cache = LineCache()
     
     species_file_dict = {}
@@ -66,8 +63,14 @@ def get_species_letters_from_coord(coord_filename):
           f'-> {coord_filename} has {total_line_count} lines')
     
     alignment_file_dict, header = open_alignment_files()
-    
+
     with open(coord_filename, 'r') as coord_file:
+        original_dir = os.getcwd()
+        print(f'=> Changing the current working directory to {target_dirname}')
+        os.chdir(target_dirname)
+        
+        dir_name = f'{coord_filename}.mult_species'
+        os.makedirs(dir_name, exist_ok=False)
         for index, species_code in enumerate(header):
             species_filename = f'{index}_{species_code}.fa.ir'
             print('=> Creating {} under {}'.format(species_filename, dir_name))
@@ -130,6 +133,9 @@ def get_species_letters_from_coord(coord_filename):
         species_file.close()
     
     close_alignment_files(alignment_file_dict)
+
+    print(f'=> Changing back to the original directory {original_dir}')
+    os.chdir(original_dir)
     
     print(f'-> #N substituted: {number_of_n_substituted}\n'
           f'=> Done!')
@@ -138,5 +144,6 @@ def get_species_letters_from_coord(coord_filename):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('coord_file')
+    parser.add_argument('target_dirname')
     args = parser.parse_args()
-    get_species_letters_from_coord(args.coord_file)
+    get_species_letters_from_coord(args.coord_file, args.target_dirname)
