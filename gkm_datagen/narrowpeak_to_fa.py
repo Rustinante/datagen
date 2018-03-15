@@ -106,14 +106,16 @@ def narrowpeak_to_fa(narrowpeak_filename, output_prefix):
     print(f'positive_train_list length: {len(positive_train_tuple_list)}\n'
           f'positive_test_list length: {len(positive_test_tuple_list)}')
     
+    train_positive_coord_filename = f'{output_prefix}.train.pos.coord'
+    test_positive_coord_filename = f'{output_prefix}.test.pos.coord'
     # The suffix ir stands for intermediate representation
     # because the line preceding each sequence letters is of the form >chrom start stop
     # whereas that in the final fasta file will be of the form >chrom:start-stop
     # The intermediate representation is for the ease of data generation
     write_seq_intermediate_rep_and_coord_file(positive_train_tuple_list, f'{output_prefix}.train.pos.fa.ir',
-                                              f'{output_prefix}.train.pos.coord')
+                                              train_positive_coord_filename)
     write_seq_intermediate_rep_and_coord_file(positive_test_tuple_list, f'{output_prefix}.test.pos.fa.ir',
-                                              f'{output_prefix}.test.pos.coord')
+                                              test_positive_coord_filename)
     
     # with open(f'{output_prefix}.train.pos.fa.ir', 'w') as train_posfile, \
     #         open(f'{output_prefix}.train.pos.coord', 'w') as train_pos_coord_file, \
@@ -148,10 +150,13 @@ def narrowpeak_to_fa(narrowpeak_filename, output_prefix):
     print(f'negative_train_list length: {len(neg_train_tuple_list)}\n'
           f'negative_test_list length: {len(neg_test_tuple_list)}')
     
+    train_neg_coord_filename = f'{output_prefix}.train.neg.coord'
+    test_neg_coord_filename = f'{output_prefix}.test.neg.coord'
+    
     write_seq_intermediate_rep_and_coord_file(neg_train_tuple_list, f'{output_prefix}.train.neg.fa.ir',
-                                              f'{output_prefix}.train.neg.coord')
+                                              train_neg_coord_filename)
     write_seq_intermediate_rep_and_coord_file(neg_test_tuple_list, f'{output_prefix}.test.neg.fa.ir',
-                                              f'{output_prefix}.test.neg.coord')
+                                              test_neg_coord_filename)
     # with open(f'{output_prefix}.train.neg.fa.ir', 'w') as train_negfile, \
     #         open(f'{output_prefix}.train.neg.coord', 'w') as train_neg_coord_file, \
     #         open(f'{output_prefix}.test.neg.fa.ir', 'w') as test_negfile, \
