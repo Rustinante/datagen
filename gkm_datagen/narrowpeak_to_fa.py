@@ -1,4 +1,5 @@
 import argparse
+import os
 import numpy as np
 import twobitreader
 from collections import defaultdict
@@ -30,8 +31,6 @@ sizes = {
     'chr21': 48129895
 }
 
-target_seq_length = 250
-
 
 def get_line_count(filename):
     count = 0
@@ -44,30 +43,28 @@ def get_line_count(filename):
 def convert_coord_to_seq_letters(narrow_filename, genome_dict):
     line_count = get_line_count(filename=narrow_filename)
     coord_dict = defaultdict(list)
-    seq_list = []
+    seq_tuple_list = []
     with open(narrow_filename, 'r') as narrow_file:
         for line_index, line in enumerate(narrow_file):
             tokens = line.strip().split()
             chrom, start, stop = tokens[0], int(tokens[1]), int(tokens[2])
-            seq_length = stop - start
             
-            if seq_length == target_seq_length:
-                dna_sequence = genome_dict[chrom].get_slice(start, stop)
-                
-                if len(dna_sequence) != target_seq_length:
-                    print(f'The DNA sequence is not {target_seq_length} bp in length. Will skip.'
-                          f'chrom: {chrom} start: {start} stop: {stop}')
-                    continue
-                
-                seq_list.append((dna_sequence, chrom, start, stop))
-                coord_dict[chrom].append((start, stop))
+            dna_sequence = genome_dict[chrom].get_slice(start, stop)
+            
+            if len(dna_sequence) != stop - start:
+                print(f'The DNA sequence is not {stop - start} bp in length. Will skip.'
+                      f'chrom: {chrom} start: {start} stop: {stop}')
+                continue
+            
+            seq_tuple_list.append((dna_sequence, chrom, start, stop))
+            coord_dict[chrom].append((start, stop))
             
             if line_index % 1000 == 0:
                 print(f'=> {line_index}/{line_count} = {line_index / line_count:.2%}', end='\r')
         
         print(f'\n=> Processed {line_count} lines from {narrow_filename}')
     
-    return seq_list, coord_dict
+    return seq_tuple_list, coord_dict
 
 
 def take_random_split(datapoints, second_segment_ratio):
@@ -78,36 +75,61 @@ def take_random_split(datapoints, second_segment_ratio):
     return first_segment, second_segment
 
 
-def narrowpeak_to_fa(filename, output_prefix):
-    test_ratio = 0.2
+def narrowpeak_to_fa(narrowpeak_filename, output_prefix):
+    """
+    Given a narrowpeak file containing the positive sequence coordinates,
+    generate both positive and negative training sequences and store them into .fa.ir files
+    for further processing by species_letters_from_coord.py
+    :param narrowpeak_filename: narrowpeak file containing the positive sequence coordinates
+    :param output_prefix: a dirctory named output_prefix will be created with everything generated saved under
+    """
+    
+    test_ratio = 0.3
     genome_dict = twobitreader.TwoBitFile('hg19.2bit')
     
-    positive_seq_tuple_list, positive_coord_dict = convert_coord_to_seq_letters(filename, genome_dict)
+    print(f'=> Creating directory {output_prefix}')
+    os.makedirs(output_prefix, exist_ok=False)
+    
+    positive_seq_tuple_list, positive_coord_dict = convert_coord_to_seq_letters(narrowpeak_filename, genome_dict)
+    
+    original_dir = os.getcwd()
+    print(f'=> Changing the working directory to {output_prefix}')
+    os.chdir(output_prefix)
     
     with open(f'{output_prefix}.pos.coord', 'w') as pos_coord_file:
         # coordinates are left inclusive right exclusive
         for _, chrom, start, stop in positive_seq_tuple_list:
             pos_coord_file.write(f'{chrom} {start} {stop}\n')
     
-    positive_train_list, positive_test_list = take_random_split(positive_seq_tuple_list, test_ratio)
+    positive_train_tuple_list, positive_test_tuple_list = take_random_split(positive_seq_tuple_list, test_ratio)
     
-    print(f'positive_train_list length: {len(positive_train_list)}\n'
-          f'positive_test_list length: {len(positive_test_list)}')
+    print(f'positive_train_list length: {len(positive_train_tuple_list)}\n'
+          f'positive_test_list length: {len(positive_test_tuple_list)}')
     
-    with open(f'{output_prefix}.train.pos.fa', 'w') as train_posfile, \
-            open(f'{output_prefix}.train.pos.coord', 'w') as train_pos_coord_file, \
-            open(f'{output_prefix}.test.pos.fa', 'w') as test_posfile, \
-            open(f'{output_prefix}.test.pos.coord', 'w') as test_pos_coord_file:
-        
-        print(f'=> Writing to {train_posfile.name} and {train_pos_coord_file.name}')
-        for train_seq, chrom, start, stop in positive_train_list:
-            train_posfile.write(f'>{chrom} {start} {stop}\n{train_seq}\n')
-            train_pos_coord_file.write(f'{chrom} {start} {stop}\n')
-        
-        print(f'=> Writing to {test_posfile.name} and {test_pos_coord_file.name}')
-        for test_seq, chrom, start, stop in positive_test_list:
-            test_posfile.write(f'>{chrom} {start} {stop}\n{test_seq}\n')
-            test_pos_coord_file.write(f'{chrom} {start} {stop}\n')
+    # The suffix ir stands for intermediate representation
+    # because the line preceding each sequence letters is of the form >chrom start stop
+    # whereas that in the final fasta file will be of the form >chrom:start-stop
+    # The intermediate representation is for the ease of data generation
+    write_seq_intermediate_rep_and_coord_file(positive_train_tuple_list, f'{output_prefix}.train.pos.fa.ir',
+                                              f'{output_prefix}.train.pos.coord')
+    write_seq_intermediate_rep_and_coord_file(positive_test_tuple_list, f'{output_prefix}.test.pos.fa.ir',
+                                              f'{output_prefix}.test.pos.coord')
+    
+    # with open(f'{output_prefix}.train.pos.fa.ir', 'w') as train_posfile, \
+    #         open(f'{output_prefix}.train.pos.coord', 'w') as train_pos_coord_file, \
+    #         open(f'{output_prefix}.test.pos.fa.ir', 'w') as test_posfile, \
+    #         open(f'{output_prefix}.test.pos.coord', 'w') as test_pos_coord_file:
+    #
+    #     print(f'=> Writing to {train_posfile.name} and {train_pos_coord_file.name}')
+    #     for train_seq, chrom, start, stop in positive_train_tuple_list:
+    #         train_posfile.write(f'>{chrom} {start} {stop}\n{train_seq}\n')
+    #         train_pos_coord_file.write(f'{chrom} {start} {stop}\n')
+    #
+    #     print(f'=> Writing to {test_posfile.name} and {test_pos_coord_file.name}')
+    #     for test_seq, chrom, start, stop in positive_test_tuple_list:
+    #         test_posfile.write(f'>{chrom} {start} {stop}\n{test_seq}\n')
+    #         test_pos_coord_file.write(f'{chrom} {start} {stop}\n')
+    #
     
     print('\n=> Generating negative sequences')
     negative_coord_dict = generate_negative_sequence_coord(positive_coord_dict, sizes, len(positive_seq_tuple_list),
@@ -115,31 +137,55 @@ def narrowpeak_to_fa(filename, output_prefix):
     
     negative_coord_filename = f'{output_prefix}.neg.coord'
     with open(negative_coord_filename, 'w') as neg_coord_file:
-        for chrom, start_coord_list in negative_coord_dict.items():
-            for start_coord in start_coord_list:
+        for chrom, start_length_tuple_list in negative_coord_dict.items():
+            for start_coord, length in start_length_tuple_list:
                 # Writing chromosome name, start coordiante, stop coordinate
-                neg_coord_file.write(f'{chrom} {start_coord} {start_coord + target_seq_length}\n')
+                neg_coord_file.write(f'{chrom} {start_coord} {start_coord + length}\n')
     
     neg_seq_tuple_list, _ = convert_coord_to_seq_letters(negative_coord_filename, genome_dict)
     
-    neg_train_list, neg_test_list = take_random_split(neg_seq_tuple_list, test_ratio)
-    print(f'negative_train_list length: {len(neg_train_list)}\n'
-          f'negative_test_list length: {len(neg_test_list)}')
+    neg_train_tuple_list, neg_test_tuple_list = take_random_split(neg_seq_tuple_list, test_ratio)
+    print(f'negative_train_list length: {len(neg_train_tuple_list)}\n'
+          f'negative_test_list length: {len(neg_test_tuple_list)}')
     
-    with open(f'{output_prefix}.train.neg.fa', 'w') as train_negfile, \
-            open(f'{output_prefix}.train.neg.coord', 'w') as train_neg_coord_file, \
-            open(f'{output_prefix}.test.neg.fa', 'w') as test_negfile, \
-            open(f'{output_prefix}.test.neg.coord', 'w') as test_neg_coord_file:
-        
-        print(f'=> Writing to {train_negfile.name} and {train_neg_coord_file.name}')
-        for train_seq, chrom, start, stop in neg_train_list:
-            train_negfile.write(f'>{chrom} {start} {stop}\n{train_seq}\n')
-            train_neg_coord_file.write(f'{chrom} {start} {stop}\n')
-        
-        print(f'=> Writing to {test_negfile.name} and {test_neg_coord_file.name}')
-        for test_seq, chrom, start, stop in neg_test_list:
-            test_negfile.write(f'>{chrom} {start} {stop}\n{test_seq}\n')
-            test_neg_coord_file.write(f'{chrom} {start} {stop}\n')
+    write_seq_intermediate_rep_and_coord_file(neg_train_tuple_list, f'{output_prefix}.train.neg.fa.ir',
+                                              f'{output_prefix}.train.neg.coord')
+    write_seq_intermediate_rep_and_coord_file(neg_test_tuple_list, f'{output_prefix}.test.neg.fa.ir',
+                                              f'{output_prefix}.test.neg.coord')
+    # with open(f'{output_prefix}.train.neg.fa.ir', 'w') as train_negfile, \
+    #         open(f'{output_prefix}.train.neg.coord', 'w') as train_neg_coord_file, \
+    #         open(f'{output_prefix}.test.neg.fa.ir', 'w') as test_negfile, \
+    #         open(f'{output_prefix}.test.neg.coord', 'w') as test_neg_coord_file:
+    #
+    # print(f'=> Writing to {train_negfile.name} and {train_neg_coord_file.name}')
+    # for train_seq, chrom, start, stop in neg_train_tuple_list:
+    #     train_negfile.write(f'>{chrom} {start} {stop}\n{train_seq}\n')
+    #     train_neg_coord_file.write(f'{chrom} {start} {stop}\n')
+    #
+    # print(f'=> Writing to {test_negfile.name} and {test_neg_coord_file.name}')
+    # for test_seq, chrom, start, stop in neg_test_tuple_list:
+    #     test_negfile.write(f'>{chrom} {start} {stop}\n{test_seq}\n')
+    #     test_neg_coord_file.write(f'{chrom} {start} {stop}\n')
+    
+    print(f'=> Changing back to the original directory {original_dir}')
+    os.chdir(original_dir)
+
+
+def write_seq_intermediate_rep_and_coord_file(seq_tuple_list, seq_ir_filename, coord_filename):
+    """
+    Writing to two files, saving the intermediate representation (IR) of the sequences and the coordinates of those sequences.
+    The IR differs from the regular fasta file only in that the description line of each sequence
+    IR will be >chrom start stop
+    while the regular fasta file will be >chrom:start-stop
+    :param seq_tuple_list: a list of tuples of the form (seq, chrom, start, stop)
+    :param seq_ir_filename: filename for the intermediate representation fa.ir file e.g. output_prefix.train.neg.fa.ir
+    :param coord_filename: filename of the file to save the coordinates in
+    """
+    with open(seq_ir_filename, 'w') as seq_ir_file, open(coord_filename, 'w') as coord_file:
+        print(f'=> Writing to {seq_ir_file.name} and {coord_file.name}')
+        for test_seq, chrom, start, stop in seq_tuple_list:
+            seq_ir_file.write(f'>{chrom} {start} {stop}\n{test_seq}\n')
+            coord_file.write(f'{chrom} {start} {stop}\n')
 
 
 def generate_negative_sequence_coord(positive_coord_dict, chrom_sizes, num_samples_required, genome_dict):
@@ -148,15 +194,25 @@ def generate_negative_sequence_coord(positive_coord_dict, chrom_sizes, num_sampl
     we do not sample from those coordiantes.
     :param chrom_sizes: mapping chromosome name to their sizes
     :param num_samples_required: total number of negative samples required.
+    :param genome_dict: use twobitreader on hg19.2bit
     """
     total_num_coordinates = sum(chrom_sizes.values())
     print(f'-> Total number of coordinates: {total_num_coordinates}')
     sample_coord = {}
     
+    print(positive_coord_dict)
+    seq_lengths = [stop - start for tuple_list in positive_coord_dict.values() for start, stop in tuple_list]
+    max_len = max(seq_lengths)
+    print(f'-> Longest positive sequence length encountered: {max_len}')
+    
+    # Subtract the maximum possible sequence length max_len from each of the start coordinates
+    # The negative samples will have length equal to at most max_len so that adding the actual
+    # length of the negative samples to the start coordinate of the sample will never overlap
+    # any of the positive sequences.
     for chrom, positive_seq_start_stop_list in positive_coord_dict.items():
         forbidden_coord_list = []
         for start, stop in positive_seq_start_stop_list:
-            forbidden_coord_list.append((start - target_seq_length, stop))
+            forbidden_coord_list.append((start - max_len, stop))
         forbidden_coord_list.sort(key=lambda start_stop_tuple: start_stop_tuple[0])
         
         upper_bound = chrom_sizes[chrom]
@@ -171,44 +227,47 @@ def generate_negative_sequence_coord(positive_coord_dict, chrom_sizes, num_sampl
         # sample twice the amount and get rid of indices that are too close together
         # Then resample one more time to make the length become num_samples
         sampled_indices = list(np.random.choice(upper_bound, num_samples * 2, replace=False))
+        length_sampling_indices = np.random.choice(len(seq_lengths), len(sampled_indices), replace=True)
+        start_length_tuple_list = list(zip(sampled_indices, [seq_lengths[i] for i in length_sampling_indices]))
         
         print('=> Filtering coordinates that are too close')
-        filter_close_coordinates(sampled_indices, target_seq_length)
+        filter_close_coordinates(start_length_tuple_list, max_len)
         
         print('=> Mapping sampled numbers back to the real coordinates')
-        for index, start in enumerate(sampled_indices):
+        for index in range(len(start_length_tuple_list)):
+            start, length = start_length_tuple_list[index]
             for forbidden_start, forbidden_stop in forbidden_coord_list:
                 if start >= forbidden_start:
-                    increment = forbidden_stop - forbidden_start
-                    sampled_indices[index] += increment
-                    start += increment
+                    start += forbidden_stop - forbidden_start
+                    start_length_tuple_list[index] = (start, length)
                 else:
                     break
         
-        current_index = len(sampled_indices) - 1
+        # Remove samples containing N
+        current_index = len(start_length_tuple_list) - 1
         chrom_reader = genome_dict[chrom]
         num_uncertain_samples = 0
         while current_index >= 0:
-            start = sampled_indices[current_index]
-            if 'N' in chrom_reader.get_slice(start, start + target_seq_length):
-                sampled_indices.pop(current_index)
+            start, length = start_length_tuple_list[current_index]
+            if 'N' in chrom_reader.get_slice(start, start + length):
+                start_length_tuple_list.pop(current_index)
                 num_uncertain_samples += 1
             current_index -= 1
         
         print(f'-> Removed {num_uncertain_samples} potential sequences containing N')
         
-        if len(sampled_indices) < num_samples:
+        if len(start_length_tuple_list) < num_samples:
             raise ValueError('not enough number of indices after filtering out indices that are close together')
         
-        sampled_indices = downsample(sampled_indices, num_samples)
-        sample_coord[chrom] = sampled_indices
+        start_length_tuple_list = downsample(start_length_tuple_list, num_samples)
+        sample_coord[chrom] = start_length_tuple_list
         
         print('=> Mapping complete\n')
     
     return sample_coord
 
 
-def filter_close_coordinates(sample_indices, min_distance):
+def filter_close_coordinates(start_length_tuple_list, min_distance):
     """
     Filters the sample_indices in place. The first pivot will be the last element of the list. At each iteration,
     if the value of the element to the left of the pivot is less than min_distance from the pivot value,
@@ -220,16 +279,16 @@ def filter_close_coordinates(sample_indices, min_distance):
     :return: a list containing a subset of the sample_indices, sorted in increasing order and containing
     elements which are at least min_distance away from each other.
     """
-    sample_indices.sort()
-    current_value = sample_indices[-1]
-    current_index = len(sample_indices) - 2
+    start_length_tuple_list.sort(key=lambda pair: pair[0])
+    current_value, current_length = start_length_tuple_list[-1]
+    current_index = len(start_length_tuple_list) - 2
     
     while current_index >= 0:
-        if current_value - sample_indices[current_index] < min_distance:
-            sample_indices.pop(current_index)
+        if current_value - start_length_tuple_list[current_index][0] < min_distance:
+            start_length_tuple_list.pop(current_index)
             current_index -= 1
         else:
-            current_value = sample_indices[current_index]
+            current_value, current_length = start_length_tuple_list[current_index]
             current_index -= 1
 
 

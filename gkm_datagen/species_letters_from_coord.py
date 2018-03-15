@@ -69,7 +69,7 @@ def get_species_letters_from_coord(coord_filename):
     
     with open(coord_filename, 'r') as coord_file:
         for index, species_code in enumerate(header):
-            species_filename = f'{index}_{species_code}.fa'
+            species_filename = f'{index}_{species_code}.fa.ir'
             print('=> Creating {} under {}'.format(species_filename, dir_name))
             species_file_dict[index] = open(os.path.join(dir_name, species_filename), 'w')
         

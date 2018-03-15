@@ -103,8 +103,10 @@ def transport_files(target_dirname, downsample_ratio):
             print(f'=> Source subdirectory: {source_sub_dirname}')
             
             for filename in source_subdir_files:
-                if filename.endswith('.fa'):
-                    target_filepath = os.path.join(target_sub_dirname, create_target_filename(filename, purpose, label))
+                if filename.endswith('.fa.ir'):
+                    suffix_len = len('.ir')
+                    target_filepath = os.path.join(target_sub_dirname,
+                                                   create_target_filename(filename[:-suffix_len - 1], purpose, label))
                     source_filepath = os.path.join(source_sub_dirname, filename)
                     
                     if should_downsample:
@@ -121,7 +123,8 @@ def transport_files(target_dirname, downsample_ratio):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(usage='To be called directly with python3 transport_files.py and not as a module with the -m option.')
+    parser = argparse.ArgumentParser(
+        usage='To be called directly with python3 transport_files.py and not as a module with the -m option.')
     parser.add_argument('target_dirname', help='The target directory to copy data to.')
     parser.add_argument('-d', '--downsample', type=float, default=1, metavar='OUT_RATIO',
                         help='The ratio of the desired number of downsampled data points against the total number of data points.')
