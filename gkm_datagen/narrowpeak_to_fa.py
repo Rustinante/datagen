@@ -117,22 +117,6 @@ def narrowpeak_to_fa(narrowpeak_filename, output_prefix):
     write_seq_intermediate_rep_and_coord_file(positive_test_tuple_list, f'{output_prefix}.test.pos.fa.ir',
                                               test_positive_coord_filename)
     
-    # with open(f'{output_prefix}.train.pos.fa.ir', 'w') as train_posfile, \
-    #         open(f'{output_prefix}.train.pos.coord', 'w') as train_pos_coord_file, \
-    #         open(f'{output_prefix}.test.pos.fa.ir', 'w') as test_posfile, \
-    #         open(f'{output_prefix}.test.pos.coord', 'w') as test_pos_coord_file:
-    #
-    #     print(f'=> Writing to {train_posfile.name} and {train_pos_coord_file.name}')
-    #     for train_seq, chrom, start, stop in positive_train_tuple_list:
-    #         train_posfile.write(f'>{chrom} {start} {stop}\n{train_seq}\n')
-    #         train_pos_coord_file.write(f'{chrom} {start} {stop}\n')
-    #
-    #     print(f'=> Writing to {test_posfile.name} and {test_pos_coord_file.name}')
-    #     for test_seq, chrom, start, stop in positive_test_tuple_list:
-    #         test_posfile.write(f'>{chrom} {start} {stop}\n{test_seq}\n')
-    #         test_pos_coord_file.write(f'{chrom} {start} {stop}\n')
-    #
-    
     print('\n=> Generating negative sequences')
     negative_coord_dict = generate_negative_sequence_coord(positive_coord_dict, sizes, len(positive_seq_tuple_list),
                                                            genome_dict)
@@ -157,20 +141,6 @@ def narrowpeak_to_fa(narrowpeak_filename, output_prefix):
                                               train_neg_coord_filename)
     write_seq_intermediate_rep_and_coord_file(neg_test_tuple_list, f'{output_prefix}.test.neg.fa.ir',
                                               test_neg_coord_filename)
-    # with open(f'{output_prefix}.train.neg.fa.ir', 'w') as train_negfile, \
-    #         open(f'{output_prefix}.train.neg.coord', 'w') as train_neg_coord_file, \
-    #         open(f'{output_prefix}.test.neg.fa.ir', 'w') as test_negfile, \
-    #         open(f'{output_prefix}.test.neg.coord', 'w') as test_neg_coord_file:
-    #
-    # print(f'=> Writing to {train_negfile.name} and {train_neg_coord_file.name}')
-    # for train_seq, chrom, start, stop in neg_train_tuple_list:
-    #     train_negfile.write(f'>{chrom} {start} {stop}\n{train_seq}\n')
-    #     train_neg_coord_file.write(f'{chrom} {start} {stop}\n')
-    #
-    # print(f'=> Writing to {test_negfile.name} and {test_neg_coord_file.name}')
-    # for test_seq, chrom, start, stop in neg_test_tuple_list:
-    #     test_negfile.write(f'>{chrom} {start} {stop}\n{test_seq}\n')
-    #     test_neg_coord_file.write(f'{chrom} {start} {stop}\n')
     
     print(f'=> Changing back to the original directory {original_dir}')
     os.chdir(original_dir)
