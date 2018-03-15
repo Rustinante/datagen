@@ -175,7 +175,6 @@ def generate_negative_sequence_coord(positive_coord_dict, chrom_sizes, num_sampl
     print(f'-> Total number of coordinates: {total_num_coordinates}')
     sample_coord = {}
     
-    print(positive_coord_dict)
     seq_lengths = [stop - start for tuple_list in positive_coord_dict.values() for start, stop in tuple_list]
     max_len = max(seq_lengths)
     print(f'-> Longest positive sequence length encountered: {max_len}')
