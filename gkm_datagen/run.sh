@@ -31,5 +31,9 @@ python3 transport_files.py $2 /u/home/a/aaronzho/project-ernst/lsgkm/tests/$2 ||
 
 
 echo "=> submitting jobs"
-cd /u/home/a/aaronzho/project-ernst/lsgkm/tests/
+cd /u/home/a/aaronzho/project-ernst/lsgkm/tests/${output_dirname}
+echo "
+#!/bin/bash
+../task.sh $SGE_TASK_ID ${output_dirname}
+" > jobarray.sh
 qsub -cwd -V -N GKMJOB -pe shared 2 -l h_data=5G,h_rt=24:00:00,highp -M $HOME -m a -t 1-100:1 jobarray.sh
