@@ -27,6 +27,10 @@ python3 -m gkm_datagen.species_letters_from_coord gkm_datagen/$2/$2.test.neg.coo
 echo "=> transporting files"
 cd gkm_datagen
 mkdir /u/home/a/aaronzho/project-ernst/lsgkm/tests/${output_dirname}
+mkdir /u/home/a/aaronzho/project-ernst/lsgkm/tests/${output_dirname}/species_model
+mkdir /u/home/a/aaronzho/project-ernst/lsgkm/tests/${output_dirname}/species_predict
+mkdir /u/home/a/aaronzho/project-ernst/lsgkm/tests/${output_dirname}/species_roc
+
 python3 transport_files.py $2 /u/home/a/aaronzho/project-ernst/lsgkm/tests/$2 || exit 1
 
 
