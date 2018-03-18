@@ -53,7 +53,6 @@ def extend_dataset(chr, purpose):
         flanking_number = 400
 
         for line in file:
-            # c1=c2=c3=0
             processed_line_count += 1
             (start_coordinate, sequence) = line.strip().split(',')
             start_coordinate = int(start_coordinate)
@@ -73,10 +72,8 @@ def extend_dataset(chr, purpose):
                     continue
                     
                 elif not start_line_hint:
-                    # c2+=1
                     result = search(alignment_file, coordinate, alignment_filename)
                 else:
-                    # c3+=1
                     result = scan_through_line_for_number(alignment_file=alignment_file, start_line_hint=start_line_hint, number=coordinate)
 
                 if result:
@@ -96,7 +93,6 @@ def extend_dataset(chr, purpose):
 
                     cache[coordinate] = (aligned_letters[1:, :], start_line_hint)
 
-            # print("cache: {} binary search: {} line search {}".format(c1,c2,c3))
             array_list.append(alignment_matrix.transpose((1, 0, 2)))
 
             if processed_line_count % 1000 == 0:

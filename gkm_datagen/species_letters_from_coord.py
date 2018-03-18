@@ -3,7 +3,7 @@ from collections import defaultdict
 import os
 import time
 
-from binary_search import search, scan_through_line_for_number
+from binary_search import search
 from LineCache import LineCache
 
 
@@ -85,35 +85,26 @@ def get_species_letters_from_coord(coord_filename, target_dirname):
             
             species_sequence = defaultdict(str)
             
-            start_line_hint = None
             for letter_index, coordinate in enumerate(range(start_coord, stop_coord)):
                 if coordinate in cache:
-                    cached_result = cache[coordinate]
-                    tokens = cached_result[0]
+                    tokens = cache[coordinate]
                     distribute_tokens_to_species_sequence(tokens, species_sequence)
-                    start_line_hint = cached_result[1]
-                    continue
                 
-                elif not start_line_hint:
+                else:
                     result = search(alignment_file, coordinate, get_alignment_filename(chrom))
-                else:
-                    result = scan_through_line_for_number(alignment_file=alignment_file,
-                                                          start_line_hint=start_line_hint, number=coordinate)
                 
-                if result:
-                    start_line_hint = result[1]
-                    tokens = result[0].strip().split(',')
-                    del tokens[0]
-                    assert len(tokens) == 100
-                    
-                    distribute_tokens_to_species_sequence(tokens, species_sequence)
-                    
-                    cache[coordinate] = (tokens, start_line_hint)
-                
-                else:
-                    number_of_n_substituted += 1
-                    tokens = ['N'] * (stop_coord - start_coord)
-                    distribute_tokens_to_species_sequence(tokens, species_sequence)
+                    if result:
+                        tokens = result[0].strip().split(',')
+                        del tokens[0]
+                        assert len(tokens) == 100
+                        
+                        cache[coordinate] = tokens
+                        distribute_tokens_to_species_sequence(tokens, species_sequence)
+                        
+                    else:
+                        number_of_n_substituted += 1
+                        tokens = ['N'] * (stop_coord - start_coord)
+                        distribute_tokens_to_species_sequence(tokens, species_sequence)
             
             for species_index in range(len(header)):
                 species_file_dict[species_index].write(f'>{chrom} {start_coord} {stop_coord}\n'

@@ -29,6 +29,7 @@ def scan_through_line_for_number(alignment_file, start_line_hint, number):
     
     return None
 
+
 def binary_search(low, high, number, file):
     if low > high:
         return None
