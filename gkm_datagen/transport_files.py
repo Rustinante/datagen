@@ -47,7 +47,8 @@ def create_target_filename(filename, purpose, label):
 
 
 def get_filename_with_downsample_suffix(filename, downsample_ratio):
-    return f'{filename}.at{downsample_ratio:.2f}'
+    # return f'{filename}.at{downsample_ratio:.2f}'
+    return f'{filename}.at1.00'
 
 
 def generate_downsample_coord(coord_filename, out_ratio):
@@ -64,6 +65,15 @@ def generate_downsample_coord(coord_filename, out_ratio):
     
     return downsample_coord_filename
 
+
+def determine_downsample_ratio(coord_filename):
+    max_samples = 15000
+    num_samples = get_line_count(coord_filename)
+    if num_samples <= max_samples:
+        return 1.
+    else:
+        return max_samples / num_samples
+    
 
 def transport_files(source_dirname, target_dirname, downsample_ratio):
     """
@@ -83,6 +93,10 @@ def transport_files(source_dirname, target_dirname, downsample_ratio):
         for label in label_list:
             source_sub_dirname = f'{src_dir_basename}.{purpose}.{label}.coord.mult_species'
             
+            coord_filename = f'{src_dir_basename}.{purpose}.{label}.coord'
+            downsample_ratio = determine_downsample_ratio(coord_filename)
+            print(f'-> Downsample ratio for {coord_filename}: {downsample_ratio:.2f}')
+            
             target_sub_dirname = os.path.join(
                 target_dirname,
                 get_filename_with_downsample_suffix(source_sub_dirname, downsample_ratio))
@@ -91,7 +105,7 @@ def transport_files(source_dirname, target_dirname, downsample_ratio):
             # to the target subdirectory target_sub_dirname
             source_downsample_sub_dirname = get_filename_with_downsample_suffix(source_sub_dirname, downsample_ratio)
             os.makedirs(source_downsample_sub_dirname, exist_ok=False)
-            downsampled_coord_filename = generate_downsample_coord(f'{src_dir_basename}.{purpose}.{label}.coord', downsample_ratio)
+            downsampled_coord_filename = generate_downsample_coord(coord_filename, downsample_ratio)
             
             print(f'\n=> Creating target subdirectory with target_sub_dirname: {target_sub_dirname}')
             os.makedirs(target_sub_dirname, exist_ok=False)
