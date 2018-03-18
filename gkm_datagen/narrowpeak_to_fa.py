@@ -197,41 +197,51 @@ def generate_negative_sequence_coord(positive_coord_dict, chrom_sizes, num_sampl
             upper_bound -= stop - start
         print(f'-> Upper bound changed to: {upper_bound} in the mapping range')
         
-        num_samples = int(num_samples_required * chrom_sizes[chrom] / total_num_coordinates)
-        # sample twice the amount and get rid of indices that are too close together
-        # Then resample one more time to make the length become num_samples
-        sampled_indices = list(np.random.choice(upper_bound, num_samples * 2, replace=False))
-        length_sampling_indices = np.random.choice(len(seq_lengths), len(sampled_indices), replace=True)
-        start_length_tuple_list = list(zip(sampled_indices, [seq_lengths[i] for i in length_sampling_indices]))
-        
-        print('=> Filtering coordinates that are too close')
-        filter_close_coordinates(start_length_tuple_list, max_len)
-        
-        print('=> Mapping sampled numbers back to the real coordinates')
-        for index in range(len(start_length_tuple_list)):
-            start, length = start_length_tuple_list[index]
-            for forbidden_start, forbidden_stop in forbidden_coord_list:
-                if start >= forbidden_start:
-                    start += forbidden_stop - forbidden_start
-                    start_length_tuple_list[index] = (start, length)
-                else:
-                    break
-        
-        # Remove samples containing N
-        current_index = len(start_length_tuple_list) - 1
-        chrom_reader = genome_dict[chrom]
-        num_uncertain_samples = 0
-        while current_index >= 0:
-            start, length = start_length_tuple_list[current_index]
-            if 'N' in chrom_reader.get_slice(start, start + length):
-                start_length_tuple_list.pop(current_index)
-                num_uncertain_samples += 1
-            current_index -= 1
-        
-        print(f'-> Removed {num_uncertain_samples} potential sequences containing N')
-        
-        if len(start_length_tuple_list) < num_samples:
-            raise ValueError('not enough number of indices after filtering out indices that are close together')
+        multiplier = 1
+        while True:
+            multiplier *= 2
+
+            print(f'=> Sampling with multiplier {multiplier}')
+            num_samples = int(num_samples_required * chrom_sizes[chrom] / total_num_coordinates)
+            
+            num_samples_to_start_with = num_samples * multiplier
+            if num_samples_to_start_with > upper_bound * 2:
+                raise ValueError('not enough number of indices after filtering out indices that are close together')
+            
+            # sample with multiplier times the target number and get rid of indices that are too close together
+            # Then resample one more time to make the length become num_samples
+            sampled_indices = list(np.random.choice(upper_bound, num_samples_to_start_with, replace=False))
+            length_sampling_indices = np.random.choice(len(seq_lengths), len(sampled_indices), replace=True)
+            start_length_tuple_list = list(zip(sampled_indices, [seq_lengths[i] for i in length_sampling_indices]))
+            
+            print('=> Filtering coordinates that are too close')
+            filter_close_coordinates(start_length_tuple_list, max_len)
+            
+            print('=> Mapping sampled numbers back to the real coordinates')
+            for index in range(len(start_length_tuple_list)):
+                start, length = start_length_tuple_list[index]
+                for forbidden_start, forbidden_stop in forbidden_coord_list:
+                    if start >= forbidden_start:
+                        start += forbidden_stop - forbidden_start
+                        start_length_tuple_list[index] = (start, length)
+                    else:
+                        break
+            
+            # Remove samples containing N
+            current_index = len(start_length_tuple_list) - 1
+            chrom_reader = genome_dict[chrom]
+            num_uncertain_samples = 0
+            while current_index >= 0:
+                start, length = start_length_tuple_list[current_index]
+                if 'N' in chrom_reader.get_slice(start, start + length):
+                    start_length_tuple_list.pop(current_index)
+                    num_uncertain_samples += 1
+                current_index -= 1
+            
+            print(f'-> Removed {num_uncertain_samples} potential sequences containing N')
+            
+            if len(start_length_tuple_list) > num_samples:
+                break
         
         start_length_tuple_list = downsample(start_length_tuple_list, num_samples)
         sample_coord[chrom] = start_length_tuple_list
