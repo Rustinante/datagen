@@ -13,14 +13,18 @@ echo "output_dirname: ${output_dirname}"
 . /u/local/Modules/default/init/modules.sh
 module load python/3.6.1
 
-
+echo "=> Running narrowpeak_to_fa.py"
 python3 narrowpeak_to_fa.py $1 $2 || exit 1
 
 
 cd ..
+echo "=> Running species_letters_from_coord train pos"
 python3 -m gkm_datagen.species_letters_from_coord gkm_datagen/$2/$2.train.pos.coord gkm_datagen/$2 || exit 1
+echo "=> Running species_letters_from_coord for train neg"
 python3 -m gkm_datagen.species_letters_from_coord gkm_datagen/$2/$2.train.neg.coord gkm_datagen/$2 || exit 1
+echo "=> Running species_letters_from_coord for test pos"
 python3 -m gkm_datagen.species_letters_from_coord gkm_datagen/$2/$2.test.pos.coord  gkm_datagen/$2 || exit 1
+echo "=> Running species_letters_from_coord for test neg"
 python3 -m gkm_datagen.species_letters_from_coord gkm_datagen/$2/$2.test.neg.coord gkm_datagen/$2 || exit 1
 
 
