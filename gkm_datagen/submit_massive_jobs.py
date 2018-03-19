@@ -14,7 +14,6 @@ line_index = args.line_index
 
 print(f'submit massive jobs for line index {line_index}')
 
-l = []
 
 with open(f'{filename}.np', 'r') as f:
     for index, line in enumerate(f):

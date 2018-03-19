@@ -54,8 +54,6 @@ def get_species_letters_from_coord(coord_filename, target_dirname):
     checkpoint_time_str = time.strftime('%a %b %d %Y %H:%M:%S UTC%z', time.localtime(time.time()))
     print('Current time: {}'.format(checkpoint_time_str))
 
-    cache = LineCache()
-    
     species_file_dict = {}
     
     total_line_count = get_line_count(coord_filename)
@@ -87,14 +85,7 @@ def get_species_letters_from_coord(coord_filename, target_dirname):
             
             start_line_hint = None
             for letter_index, coordinate in enumerate(range(start_coord, stop_coord)):
-                if coordinate in cache:
-                    cached_result = cache[coordinate]
-                    tokens = cached_result[0]
-                    distribute_tokens_to_species_sequence(tokens, species_sequence)
-                    start_line_hint = cached_result[1]
-                    continue
-                
-                elif not start_line_hint:
+                if not start_line_hint:
                     result = search(alignment_file, coordinate, get_alignment_filename(chrom))
                 else:
                     result = scan_through_line_for_number(alignment_file=alignment_file,
@@ -108,8 +99,6 @@ def get_species_letters_from_coord(coord_filename, target_dirname):
                     
                     distribute_tokens_to_species_sequence(tokens, species_sequence)
                     
-                    cache[coordinate] = (tokens, start_line_hint)
-                
                 else:
                     number_of_n_substituted += 1
                     tokens = ['N'] * (stop_coord - start_coord)
