@@ -109,8 +109,8 @@ def narrowpeak_to_fa(narrowpeak_filename, output_prefix):
     :param output_prefix: a dirctory named output_prefix will be created with everything generated saved under
     """
     
-    max_train_samples = 30000
-    max_test_samples = 30000
+    max_train_samples = 20000
+    max_test_samples = 20000
     
     test_ratio = 0.3
     genome_dict = twobitreader.TwoBitFile('hg19.2bit')
