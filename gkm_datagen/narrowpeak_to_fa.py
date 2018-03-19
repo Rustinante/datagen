@@ -40,29 +40,54 @@ def get_line_count(filename):
     return count
 
 
-def convert_coord_to_seq_letters(narrow_filename, genome_dict):
+def convert_coord_to_seq_letters(narrow_filename, genome_dict, max_samples=None):
     line_count = get_line_count(filename=narrow_filename)
     coord_dict = defaultdict(list)
     seq_tuple_list = []
+    
+    sampled_line_indices = None
+    if max_samples:
+        sampled_line_indices = set(np.random.choice(line_count, max_samples, replace=False))
+    
     with open(narrow_filename, 'r') as narrow_file:
-        for line_index, line in enumerate(narrow_file):
-            tokens = line.strip().split()
-            chrom, start, stop = tokens[0], int(tokens[1]), int(tokens[2])
+        if sampled_line_indices:
+            for line_index, line in enumerate(narrow_file):
+                if line_index not in sampled_line_indices:
+                    continue
+                tokens = line.strip().split()
+                chrom, start, stop = tokens[0], int(tokens[1]), int(tokens[2])
+                
+                dna_sequence = genome_dict[chrom].get_slice(start, stop)
+                
+                if len(dna_sequence) != stop - start:
+                    print(f'The DNA sequence is not {stop - start} bp in length. Will skip.'
+                          f'chrom: {chrom} start: {start} stop: {stop}')
+                    continue
+                
+                seq_tuple_list.append((dna_sequence, chrom, start, stop))
+                coord_dict[chrom].append((start, stop))
+                
+                if line_index % 1000 == 0:
+                    print(f'=> {line_index}/{line_count} = {line_index / line_count:.2%}', end='\r')
+        else:
+            for line_index, line in enumerate(narrow_file):
+                tokens = line.strip().split()
+                chrom, start, stop = tokens[0], int(tokens[1]), int(tokens[2])
+                
+                dna_sequence = genome_dict[chrom].get_slice(start, stop)
+                
+                if len(dna_sequence) != stop - start:
+                    print(f'The DNA sequence is not {stop - start} bp in length. Will skip.'
+                          f'chrom: {chrom} start: {start} stop: {stop}')
+                    continue
+                
+                seq_tuple_list.append((dna_sequence, chrom, start, stop))
+                coord_dict[chrom].append((start, stop))
+                
+                if line_index % 1000 == 0:
+                    print(f'=> {line_index}/{line_count} = {line_index / line_count:.2%}', end='\r')
             
-            dna_sequence = genome_dict[chrom].get_slice(start, stop)
-            
-            if len(dna_sequence) != stop - start:
-                print(f'The DNA sequence is not {stop - start} bp in length. Will skip.'
-                      f'chrom: {chrom} start: {start} stop: {stop}')
-                continue
-            
-            seq_tuple_list.append((dna_sequence, chrom, start, stop))
-            coord_dict[chrom].append((start, stop))
-            
-            if line_index % 1000 == 0:
-                print(f'=> {line_index}/{line_count} = {line_index / line_count:.2%}', end='\r')
-        
-        print(f'\n=> Processed {line_count} lines from {narrow_filename}')
+            print(f'\n=> Processed {line_count} lines from {narrow_filename}')
     
     return seq_tuple_list, coord_dict
 
@@ -84,13 +109,19 @@ def narrowpeak_to_fa(narrowpeak_filename, output_prefix):
     :param output_prefix: a dirctory named output_prefix will be created with everything generated saved under
     """
     
+    max_train_samples = 30000
+    max_test_samples = 30000
+    
     test_ratio = 0.3
     genome_dict = twobitreader.TwoBitFile('hg19.2bit')
     
     print(f'=> Creating directory {output_prefix}')
     os.makedirs(output_prefix, exist_ok=False)
     
-    positive_seq_tuple_list, positive_coord_dict = convert_coord_to_seq_letters(narrowpeak_filename, genome_dict)
+    positive_seq_tuple_list, positive_coord_dict = convert_coord_to_seq_letters(
+        narrowpeak_filename,
+        genome_dict,
+        max_samples=max_train_samples if get_line_count(narrowpeak_filename) > max_train_samples else None)
     
     original_dir = os.getcwd()
     print(f'=> Changing the working directory to {output_prefix}')
@@ -128,7 +159,10 @@ def narrowpeak_to_fa(narrowpeak_filename, output_prefix):
                 # Writing chromosome name, start coordiante, stop coordinate
                 neg_coord_file.write(f'{chrom} {start_coord} {start_coord + length}\n')
     
-    neg_seq_tuple_list, _ = convert_coord_to_seq_letters(negative_coord_filename, genome_dict)
+    neg_seq_tuple_list, _ = convert_coord_to_seq_letters(
+        negative_coord_filename,
+        genome_dict,
+        max_samples=max_test_samples if get_line_count(negative_coord_filename) > max_test_samples else None)
     
     neg_train_tuple_list, neg_test_tuple_list = take_random_split(neg_seq_tuple_list, test_ratio)
     print(f'negative_train_list length: {len(neg_train_tuple_list)}\n'
@@ -200,7 +234,7 @@ def generate_negative_sequence_coord(positive_coord_dict, chrom_sizes, num_sampl
         multiplier = 1
         while True:
             multiplier *= 2
-
+            
             print(f'=> Sampling with multiplier {multiplier}')
             num_samples = int(num_samples_required * chrom_sizes[chrom] / total_num_coordinates)
             

@@ -12,7 +12,7 @@ filename = args.narrowfile_list_filename
 narrow_dirname = args.narrow_dirname
 line_index = args.line_index
 
-print(f'submit massive jobs for line index {line_index}')
+print(f'=> submit massive jobs for line index {line_index}')
 
 
 with open(f'{filename}.np', 'r') as f:
