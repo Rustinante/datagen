@@ -40,35 +40,52 @@ def get_line_count(filename):
     return count
 
 
-def convert_coord_to_seq_letters(narrow_filename, genome_dict, max_samples=None):
+def convert_coord_to_seq_letters(narrow_filename, genome_dict, max_samples=None, max_seq_len=4096):
     line_count = get_line_count(filename=narrow_filename)
     coord_dict = defaultdict(list)
     seq_tuple_list = []
     
-    sampled_line_indices = None
-    if max_samples:
-        sampled_line_indices = set(np.random.choice(line_count, max_samples, replace=False))
+    num_valid_samples = 0
+    
+    used_sample_indices = set()
     
     with open(narrow_filename, 'r') as narrow_file:
-        if sampled_line_indices:
-            for line_index, line in enumerate(narrow_file):
-                if line_index not in sampled_line_indices:
-                    continue
-                tokens = line.strip().split()
-                chrom, start, stop = tokens[0], int(tokens[1]), int(tokens[2])
+        if max_samples and max_samples < line_count:
+            initial_sample_size = max_samples
+            
+            while num_valid_samples < max_samples and initial_sample_size < line_count:
+                sampled_line_indices = set(np.random.choice(line_count, initial_sample_size, replace=False))
+                sampled_line_indices.difference_update(used_sample_indices)
+                used_sample_indices.union(sampled_line_indices)
                 
-                dna_sequence = genome_dict[chrom].get_slice(start, stop)
-                
-                if len(dna_sequence) != stop - start:
-                    print(f'The DNA sequence is not {stop - start} bp in length. Will skip.'
-                          f'chrom: {chrom} start: {start} stop: {stop}')
-                    continue
-                
-                seq_tuple_list.append((dna_sequence, chrom, start, stop))
-                coord_dict[chrom].append((start, stop))
-                
-                if line_index % 1000 == 0:
-                    print(f'=> {line_index}/{line_count} = {line_index / line_count:.2%}', end='\r')
+                for line_index, line in enumerate(narrow_file):
+                    if line_index not in sampled_line_indices:
+                        continue
+                    tokens = line.strip().split()
+                    chrom, start, stop = tokens[0], int(tokens[1]), int(tokens[2])
+                    
+                    dna_sequence = genome_dict[chrom].get_slice(start, stop)
+                    
+                    if len(dna_sequence) != stop - start:
+                        print(f'The DNA sequence is not {stop - start} bp in length. Will skip.'
+                              f'chrom: {chrom} start: {start} stop: {stop}')
+                        continue
+                    
+                    if stop - start > max_seq_len:
+                        print(f'Sequence length {stop - start} is longer than max_seq_len {max_seq_len}. Skipping.')
+                        continue
+                    
+                    seq_tuple_list.append((dna_sequence, chrom, start, stop))
+                    coord_dict[chrom].append((start, stop))
+                    num_valid_samples += 1
+                    if num_valid_samples >= max_samples:
+                        print(f'-> Reached {max_samples} samples')
+                        break
+                    
+                    if line_index % 1000 == 0:
+                        print(f'=> {line_index}/{line_count} = {line_index / line_count:.2%}', end='\r')
+
+                initial_sample_size = min(initial_sample_size * 2, line_count)
         else:
             for line_index, line in enumerate(narrow_file):
                 tokens = line.strip().split()
@@ -81,13 +98,19 @@ def convert_coord_to_seq_letters(narrow_filename, genome_dict, max_samples=None)
                           f'chrom: {chrom} start: {start} stop: {stop}')
                     continue
                 
+                if stop - start > max_seq_len:
+                    print(f'Sequence length {stop - start} is longer than max_seq_len {max_seq_len}. Skipping.')
+                    continue
+                
                 seq_tuple_list.append((dna_sequence, chrom, start, stop))
                 coord_dict[chrom].append((start, stop))
+                num_valid_samples += 1
                 
                 if line_index % 1000 == 0:
                     print(f'=> {line_index}/{line_count} = {line_index / line_count:.2%}', end='\r')
             
-            print(f'\n=> Processed {line_count} lines from {narrow_filename}')
+            print(f'\n=> Processed {line_count} lines from {narrow_filename}. '
+                  f'\n->Collected {num_valid_samples} valid sequences.')
     
     return seq_tuple_list, coord_dict
 
