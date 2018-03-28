@@ -44,4 +44,4 @@ echo "
 #!/bin/bash
 ../task.sh \${SGE_TASK_ID} ${output_dirname}
 " > jobarray.sh
-qsub -cwd -V -N ${output_dirname}_job -pe shared 2 -l h_data=5G,h_rt=24:00:00,highp -M $HOME -m a -t 1-100:1 jobarray.sh
+qsub -cwd -V -N ${output_dirname}_job -pe shared 2 -l h_data=5G,h_rt=36:00:00,highp -M $HOME -m a -t 1-100:1 jobarray.sh

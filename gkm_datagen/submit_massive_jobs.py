@@ -15,7 +15,7 @@ line_index = args.line_index
 print(f'=> submit massive jobs for line index {line_index}')
 
 
-with open(f'{filename}.np', 'r') as f:
+with open(f'{filename}', 'r') as f:
     for index, line in enumerate(f):
         if index != line_index:
             continue
