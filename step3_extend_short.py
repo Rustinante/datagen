@@ -98,8 +98,9 @@ def extend_dataset(chr, purpose):
     coordinate_filename = os.path.join('data', '{}_{}'.format(chr, purpose))
     alignment_filename = '{}_maf_sequence.csv'.format(chr)
     hdf5_filename = '{}_{}.short.hdf5'.format(chr, purpose)
-    species_indices = [11, 54, 73, 83]
-    number_of_species = len(species_indices) + 1
+    # species_indices = [11, 42, 55, 74, 84]
+    species_indices = [42, 74, 39, 21, 78, 69, 83, 94, 81, 96, 71, 17, 75, 12]
+    number_of_species = len(species_indices)
     
     print('=> coordinate_filename: {}'.format(coordinate_filename))
     print('=> alignment_filename: {}'.format(alignment_filename))
@@ -118,13 +119,9 @@ def extend_dataset(chr, purpose):
         
         for line in file:
             processed_line_count += 1
-            (start_coordinate, sequence) = line.strip().split(',')
-            start_coordinate = int(start_coordinate)
+            start_coordinate = int(line.strip().split(',')[0])
             
             alignment_matrix = np.zeros((seq_len, number_of_species, feature_dim), dtype='uint8')
-            
-            for letter_index, hg_letter in enumerate(sequence):
-                alignment_matrix[letter_index, 0, :] = mapping[hg_letter]
             
             start_line_hint = None
             for letter_index, coordinate in enumerate(
@@ -144,23 +141,15 @@ def extend_dataset(chr, purpose):
                 if result:
                     start_line_hint = result[1]
                     tokens = result[0].strip().split(',')
-                    # Important: pop the human_index first before removing the start index,
-                    # so that the human_index will be the correct index.
-                    del tokens[human_index]
+                    # the first token is pos
                     del tokens[0]
                     
-                    # aligned_letters is 100x4
+                    # aligned_letters is of shape (num_species , feature_dim)
                     aligned_letters = alignment_matrix[letter_index]
                     
                     for row_number, species_index in enumerate(species_indices):
                         letter = tokens[species_index]
-                        # +1 because we put hg19 in the first row
-                        aligned_letters[row_number + 1, :] = mapping[letter]
-                    
-                    # for species_index, letter in enumerate(tokens):
-                    # aligned_letters is 100x4
-                    # +1 because we put hg19 in the first row
-                    # aligned_letters[species_index + 1, :] = mapping[letter]
+                        aligned_letters[row_number, :] = mapping[letter]
                     
                     cache[coordinate] = (aligned_letters[1:, :], start_line_hint)
             
@@ -179,7 +168,9 @@ def extend_dataset(chr, purpose):
         
         array_list_length = len(array_list)
         
-        feature_data = feature_group.create_dataset('data', (array_list_length, number_of_species, seq_len, feature_dim), dtype='uint8')
+        feature_data = feature_group.create_dataset('data',
+                                                    (array_list_length, number_of_species, seq_len, feature_dim),
+                                                    dtype='uint8')
         for index, matrix in enumerate(array_list):
             feature_data[index] = matrix
             

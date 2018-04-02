@@ -1,6 +1,6 @@
-
 line_number = 0
-with open ('coord', 'r') as f, open('train_coord', 'w') as train_file, open('valid_coord', 'w') as valid_file, open('test_coord', 'w') as test_file:
+with open('coord', 'r') as f, open('train_coord', 'w') as train_file, open('valid_coord', 'w') as valid_file, open(
+        'test_coord', 'w') as test_file:
     for i in range(2200000):
         line = f.readline()
         train_file.write(line)
@@ -23,5 +23,3 @@ with open ('coord', 'r') as f, open('train_coord', 'w') as train_file, open('val
         test_file.write(line)
         line_number += 1
     print("{} lines for test_coord".format(line_number))
-    
-    
