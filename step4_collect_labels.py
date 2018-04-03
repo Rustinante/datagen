@@ -35,7 +35,7 @@ def add_labels_to_dataset(labels_dict):
         print('=> {} has {} labels with a corresponding array of shape {}'
               .format(chr, len(label_list), label_array.shape))
         
-        hdf5_filename = '{}_train.align.hdf5'.format(chr)
+        hdf5_filename = '{}_train.short.hdf5'.format(chr)
         print('=> opening {}'.format(hdf5_filename))
         
         with h5py.File(hdf5_filename, 'r+') as hdf5_file:
@@ -76,7 +76,7 @@ def add_labels_to_validation_dataset(labels_dict):
         print('=> {} has {} labels with a corresponding array of shape {}'
               .format(chr, len(label_list), label_array.shape))
         
-        hdf5_filename = '{}_valid.align.hdf5'.format(chr)
+        hdf5_filename = '{}_valid.short.hdf5'.format(chr)
         print('=> opening {}'.format(hdf5_filename))
         
         with h5py.File(hdf5_filename, 'r+') as hdf5_file:
@@ -115,7 +115,7 @@ def add_labels_to_test_dataset(labels_dict):
         print('=> {} has {} labels with a corresponding array of shape {}'
               .format(chr, len(label_list), label_array.shape))
         
-        hdf5_filename = '{}_test.align.hdf5'.format(chr)
+        hdf5_filename = '{}_test.short.hdf5'.format(chr)
         print('=> opening {}'.format(hdf5_filename))
         
         with h5py.File(hdf5_filename, 'r+') as hdf5_file:
@@ -125,13 +125,14 @@ def add_labels_to_test_dataset(labels_dict):
     
 
 if __name__ == '__main__':
+    print('=> adding labels to the training dataset')
     collected_labels = collect_labels()
     add_labels_to_dataset(collected_labels)
-    
+
     validation_labels = collect_validation_labels()
     print('=> adding labels to the validation dataset')
     add_labels_to_validation_dataset(validation_labels)
-    
+
     test_labels = collect_test_labels()
     print('=> adding labels to the testing dataset')
     add_labels_to_test_dataset(test_labels)

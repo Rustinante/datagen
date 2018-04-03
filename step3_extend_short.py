@@ -152,7 +152,7 @@ def extend_dataset(chr, purpose):
             revcomp_matrix = np.zeros((seq_len, number_of_species, feature_dim), dtype='uint8')
             
             start_line_hint = None
-            end_index = start_coordinate + seq_len - 1
+            end_index = seq_len - 1
             for letter_index, coordinate in enumerate(range(start_coordinate, start_coordinate + seq_len)):
                 if coordinate in cache:
                     cached_result = cache[coordinate]
