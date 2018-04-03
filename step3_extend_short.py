@@ -45,23 +45,49 @@ class LineCache:
         return self.cache.items()
 
 
+a_array = np.array([1, 0, 0, 0, 0], dtype='uint8')
+g_array = np.array([0, 1, 0, 0, 0], dtype='uint8')
+c_array = np.array([0, 0, 1, 0, 0], dtype='uint8')
+t_array = np.array([0, 0, 0, 1, 0], dtype='uint8')
+x_array = np.array([0, 0, 0, 0, 1], dtype='uint8')
+zero_array = np.array([0, 0, 0, 0, 0], dtype='uint8')
+
 mapping = {
-    'a': np.array([1, 0, 0, 0, 0]),
-    'A': np.array([1, 0, 0, 0, 0]),
+    'a': a_array,
+    'A': a_array,
     
-    'g': np.array([0, 1, 0, 0, 0]),
-    'G': np.array([0, 1, 0, 0, 0]),
+    'g': g_array,
+    'G': g_array,
     
-    'c': np.array([0, 0, 1, 0, 0]),
-    'C': np.array([0, 0, 1, 0, 0]),
+    'c': c_array,
+    'C': c_array,
     
-    't': np.array([0, 0, 0, 1, 0]),
-    'T': np.array([0, 0, 0, 1, 0]),
+    't': t_array,
+    'T': t_array,
     
-    'X': np.array([0, 0, 0, 0, 1]),
+    'X': x_array,
     
-    'N': np.array([0, 0, 0, 0, 0]),
-    'n': np.array([0, 0, 0, 0, 0])
+    'N': zero_array,
+    'n': zero_array
+}
+
+complement_mapping = {
+    'a': t_array,
+    'A': t_array,
+    
+    'g': c_array,
+    'G': c_array,
+    
+    'c': g_array,
+    'C': g_array,
+    
+    't': a_array,
+    'T': a_array,
+    
+    'X': x_array,
+    
+    'N': zero_array,
+    'n': zero_array
 }
 
 
@@ -94,42 +120,46 @@ def extend_dataset(chr, purpose):
     cache = LineCache()
     
     array_list = []
+    reverse_complement_array_list = []
     
     coordinate_filename = os.path.join('data', '{}_{}'.format(chr, purpose))
     alignment_filename = '{}_maf_sequence.csv'.format(chr)
     hdf5_filename = '{}_{}.short.hdf5'.format(chr, purpose)
-    # species_indices = [11, 42, 55, 74, 84]
+    hdf5_revcomp_filename = '{}_{}.revcomp.short.hdf5'.format(chr, purpose)
     species_indices = [42, 74, 39, 21, 78, 69, 83, 94, 81, 96, 71, 17, 75, 12]
     number_of_species = len(species_indices)
     
     print('=> coordinate_filename: {}'.format(coordinate_filename))
     print('=> alignment_filename: {}'.format(alignment_filename))
     print('=> target hdf5_filename: {}'.format(hdf5_filename))
+    print('=> target reverse complement hdf5_filename: {}'.format(hdf5_revcomp_filename))
     
     with open(coordinate_filename, 'r') as file, open(alignment_filename, 'r') as alignment_file:
         header = alignment_file.readline().strip().split(',')
-        human_index = header.index('hg19')
         
         processed_line_count = 0
         start_time = time.time()
-        flanking_number = 0
         
-        seq_len = 200 + 2 * flanking_number
+        seq_len = 200
         feature_dim = 5
         
         for line in file:
             processed_line_count += 1
             start_coordinate = int(line.strip().split(',')[0])
             
+            # revcomp_matrix is the reverse complement of the sequences
             alignment_matrix = np.zeros((seq_len, number_of_species, feature_dim), dtype='uint8')
+            revcomp_matrix = np.zeros((seq_len, number_of_species, feature_dim), dtype='uint8')
             
             start_line_hint = None
-            for letter_index, coordinate in enumerate(
-                    range(start_coordinate - flanking_number, start_coordinate + 200 + flanking_number)):
+            end_index = start_coordinate + seq_len - 1
+            for letter_index, coordinate in enumerate(range(start_coordinate, start_coordinate + seq_len)):
                 if coordinate in cache:
                     cached_result = cache[coordinate]
-                    alignment_matrix[letter_index][1:, :] = cached_result[0]
-                    start_line_hint = cached_result[1]
+                    alignment_matrix[letter_index] = cached_result[0]
+                    revcomp_matrix[end_index - letter_index] = cached_result[1]
+                    start_line_hint = cached_result[2]
+                    
                     continue
                 
                 elif not start_line_hint:
@@ -139,21 +169,25 @@ def extend_dataset(chr, purpose):
                                                           start_line_hint=start_line_hint, number=coordinate)
                 
                 if result:
-                    start_line_hint = result[1]
+                    start_line_hint = result[2]
                     tokens = result[0].strip().split(',')
                     # the first token is pos
                     del tokens[0]
                     
                     # aligned_letters is of shape (num_species , feature_dim)
+                    # revcomp_letters is associated at the index end_index - letter_index
                     aligned_letters = alignment_matrix[letter_index]
+                    revcomp_letters = revcomp_matrix[end_index - letter_index]
                     
                     for row_number, species_index in enumerate(species_indices):
                         letter = tokens[species_index]
                         aligned_letters[row_number, :] = mapping[letter]
+                        revcomp_letters[row_number, :] = complement_mapping[letter]
                     
-                    cache[coordinate] = (aligned_letters[1:, :], start_line_hint)
+                    cache[coordinate] = (aligned_letters, revcomp_letters, start_line_hint)
             
             array_list.append(alignment_matrix.transpose((1, 0, 2)))
+            reverse_complement_array_list.append(revcomp_matrix.transpose((1, 0, 2)))
             
             if processed_line_count % 1000 == 0:
                 elapsed_time = time.time() - start_time
@@ -175,9 +209,24 @@ def extend_dataset(chr, purpose):
             feature_data[index] = matrix
             
             if index % 1000 == 0:
-                print("{}/{} in {:5f}s".format(index, array_list_length, time.time() - stamp))
+                print("{}/{} in {:5f}s".format(index, array_list_length, time.time() - stamp), end='\b')
+
+    print('\n=> Serializing the reverse complement...')
+    with h5py.File(hdf5_revcomp_filename, 'w') as file:
+        feature_group = file.create_group('feature')
     
-    print('=> Finished serializeing in {:.5f}s'.format(time.time() - stamp))
+        array_list_length = len(reverse_complement_array_list)
+    
+        feature_data = feature_group.create_dataset('data',
+                                                    (array_list_length, number_of_species, seq_len, feature_dim),
+                                                    dtype='uint8')
+        for index, matrix in enumerate(reverse_complement_array_list):
+            feature_data[index] = matrix
+        
+            if index % 1000 == 0:
+                print("{}/{} in {:5f}s".format(index, array_list_length, time.time() - stamp), end='\b')
+                
+    print('\n=> Finished serializeing in {:.5f}s'.format(time.time() - stamp))
 
 
 if __name__ == '__main__':
