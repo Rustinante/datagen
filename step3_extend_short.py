@@ -169,7 +169,7 @@ def extend_dataset(chr, purpose):
                                                           start_line_hint=start_line_hint, number=coordinate)
                 
                 if result:
-                    start_line_hint = result[2]
+                    start_line_hint = result[1]
                     tokens = result[0].strip().split(',')
                     # the first token is pos
                     del tokens[0]
@@ -193,10 +193,10 @@ def extend_dataset(chr, purpose):
                 elapsed_time = time.time() - start_time
                 time_per_line = elapsed_time / processed_line_count
                 print('Processed {} lines in {:5f}s, averaging: {:5f}s per line'
-                      .format(processed_line_count, elapsed_time, time_per_line))
+                      .format(processed_line_count, elapsed_time, time_per_line), end='\b')
     
     stamp = time.time()
-    print('=> Serializing...')
+    print('\n=> Serializing...')
     with h5py.File(hdf5_filename, 'w') as file:
         feature_group = file.create_group('feature')
         
