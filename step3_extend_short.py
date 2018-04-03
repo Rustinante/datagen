@@ -193,7 +193,7 @@ def extend_dataset(chr, purpose):
                 elapsed_time = time.time() - start_time
                 time_per_line = elapsed_time / processed_line_count
                 print('Processed {} lines in {:5f}s, averaging: {:5f}s per line'
-                      .format(processed_line_count, elapsed_time, time_per_line), end='\b')
+                      .format(processed_line_count, elapsed_time, time_per_line), end='\r')
     
     stamp = time.time()
     print('\n=> Serializing...')
@@ -209,7 +209,7 @@ def extend_dataset(chr, purpose):
             feature_data[index] = matrix
             
             if index % 1000 == 0:
-                print("{}/{} in {:5f}s".format(index, array_list_length, time.time() - stamp), end='\b')
+                print("{}/{} in {:5f}s".format(index, array_list_length, time.time() - stamp), end='\r')
 
     print('\n=> Serializing the reverse complement...')
     with h5py.File(hdf5_revcomp_filename, 'w') as file:
@@ -224,7 +224,7 @@ def extend_dataset(chr, purpose):
             feature_data[index] = matrix
         
             if index % 1000 == 0:
-                print("{}/{} in {:5f}s".format(index, array_list_length, time.time() - stamp), end='\b')
+                print("{}/{} in {:5f}s".format(index, array_list_length, time.time() - stamp), end='\r')
                 
     print('\n=> Finished serializeing in {:.5f}s'.format(time.time() - stamp))
 
