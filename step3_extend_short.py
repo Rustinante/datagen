@@ -113,7 +113,7 @@ def scan_through_line_for_number(alignment_file, start_line_hint, number):
     return None
 
 
-def extend_dataset(chr, purpose):
+def extend_dataset(chrom, purpose):
     checkpoint_time_str = time.strftime('%a %b %d %Y %H:%M:%S UTC%z', time.localtime(time.time()))
     print('Current time: {}'.format(checkpoint_time_str))
     
@@ -122,10 +122,10 @@ def extend_dataset(chr, purpose):
     array_list = []
     reverse_complement_array_list = []
     
-    coordinate_filename = os.path.join('data', '{}_{}'.format(chr, purpose))
-    alignment_filename = '{}_maf_sequence.csv'.format(chr)
-    hdf5_filename = '{}_{}.short.hdf5'.format(chr, purpose)
-    hdf5_revcomp_filename = '{}_{}.revcomp.short.hdf5'.format(chr, purpose)
+    coordinate_filename = os.path.join('data', '{}_{}'.format(chrom, purpose))
+    alignment_filename = '{}_maf_sequence.csv'.format(chrom)
+    hdf5_filename = '{}_{}.short.hdf5'.format(chrom, purpose)
+    hdf5_revcomp_filename = '{}_{}.revcomp.short.hdf5'.format(chrom, purpose)
     species_indices = [42, 74, 39, 21, 78, 69, 83, 94, 81, 96, 71, 17, 75, 12]
     number_of_species = len(species_indices)
     
