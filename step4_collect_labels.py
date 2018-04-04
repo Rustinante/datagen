@@ -36,12 +36,18 @@ def add_labels_to_dataset(labels_dict):
               .format(chr, len(label_list), label_array.shape))
         
         hdf5_filename = '{}_train.short.hdf5'.format(chr)
+        revcomp_filename = '{}_train.revcomp.short.hdf5'.format(chr)
         print('=> opening {}'.format(hdf5_filename))
         
         with h5py.File(hdf5_filename, 'r+') as hdf5_file:
             group = hdf5_file.create_group('label')
             dataset = group.create_dataset('data', data=label_array, dtype='uint8')
         print('=> added the labels to {}'.format(hdf5_filename))
+        
+        with h5py.File(revcomp_filename, 'r+') as hdf5_file:
+            group = hdf5_file.create_group('label')
+            dataset = group.create_dataset('data', data=label_array, dtype='uint8')
+        print('=> added the labels to {}'.format(revcomp_filename))
         
 
 def collect_validation_labels():
@@ -77,12 +83,18 @@ def add_labels_to_validation_dataset(labels_dict):
               .format(chr, len(label_list), label_array.shape))
         
         hdf5_filename = '{}_valid.short.hdf5'.format(chr)
+        revcomp_filename = '{}_valid.revcomp.short.hdf5'.format(chr)
         print('=> opening {}'.format(hdf5_filename))
         
         with h5py.File(hdf5_filename, 'r+') as hdf5_file:
             group = hdf5_file.create_group('label')
             dataset = group.create_dataset('data', data=label_array, dtype='uint8')
         print('=> added the labels to {}'.format(hdf5_filename))
+        
+        with h5py.File(revcomp_filename, 'r+') as hdf5_file:
+            group = hdf5_file.create_group('label')
+            dataset = group.create_dataset('data', data=label_array, dtype='uint8')
+        print('=> added the labels to {}'.format(revcomp_filename))
 
 
 def collect_test_labels():
@@ -116,13 +128,19 @@ def add_labels_to_test_dataset(labels_dict):
               .format(chr, len(label_list), label_array.shape))
         
         hdf5_filename = '{}_test.short.hdf5'.format(chr)
+        revcomp_filename = '{}_test.revcomp.short.hdf5'.format(chr)
         print('=> opening {}'.format(hdf5_filename))
         
         with h5py.File(hdf5_filename, 'r+') as hdf5_file:
             group = hdf5_file.create_group('label')
             dataset = group.create_dataset('data', data=label_array, dtype='uint8')
         print('=> added the labels to {}'.format(hdf5_filename))
-    
+
+        with h5py.File(revcomp_filename, 'r+') as hdf5_file:
+            group = hdf5_file.create_group('label')
+            dataset = group.create_dataset('data', data=label_array, dtype='uint8')
+        print('=> added the labels to {}'.format(revcomp_filename))
+
 
 if __name__ == '__main__':
     print('=> adding labels to the training dataset')
