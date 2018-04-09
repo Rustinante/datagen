@@ -40,7 +40,7 @@ def get_line_count(filename):
     return count
 
 
-def convert_coord_to_seq_letters(narrow_filename, genome_dict, max_samples=None, max_seq_len=4096):
+def convert_coord_to_seq_letters(narrow_filename, genome_dict, max_samples=None, max_seq_len=4090):
     line_count = get_line_count(filename=narrow_filename)
     coord_dict = defaultdict(list)
     seq_tuple_list = []
