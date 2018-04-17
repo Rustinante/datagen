@@ -49,10 +49,18 @@ def close_alignment_files(file_dict):
         file.close()
 
 
-def get_species_letters_from_coord(coord_filename, target_dirname):
+def is_informative_sequence(seq):
+    for letter in seq:
+        if letter != 'X' and letter != 'N':
+            return True
+    return False
+
+
+def get_species_letters_from_coord(coord_filename, target_dirname, ignore_noninformative):
     checkpoint_time_str = time.strftime('%a %b %d %Y %H:%M:%S UTC%z', time.localtime(time.time()))
     print('Current time: {}'.format(checkpoint_time_str))
-
+    print(f'-> ignore noninformative: {ignore_noninformative}')
+    
     species_file_dict = {}
     
     total_line_count = get_line_count(coord_filename)
@@ -60,7 +68,7 @@ def get_species_letters_from_coord(coord_filename, target_dirname):
           f'-> {coord_filename} has {total_line_count} lines')
     
     alignment_file_dict, header = open_alignment_files()
-
+    
     with open(coord_filename, 'r') as coord_file:
         dir_name = os.path.join(target_dirname, f'{os.path.basename(os.path.normpath(coord_filename))}.mult_species')
         os.makedirs(dir_name, exist_ok=False)
@@ -97,15 +105,22 @@ def get_species_letters_from_coord(coord_filename, target_dirname):
                     assert len(tokens) == 100
                     
                     distribute_tokens_to_species_sequence(tokens, species_sequence)
-                    
+                
                 else:
                     number_of_n_substituted += 1
                     tokens = ['N'] * (stop_coord - start_coord)
                     distribute_tokens_to_species_sequence(tokens, species_sequence)
             
-            for species_index in range(len(header)):
-                species_file_dict[species_index].write(f'>{chrom} {start_coord} {stop_coord}\n'
-                                                       f'{species_sequence[species_index]}\n')
+            if ignore_noninformative:
+                for species_index in range(len(header)):
+                    seq = species_sequence[species_index]
+                    if is_informative_sequence(seq):
+                        species_file_dict[species_index].write(f'>{chrom} {start_coord} {stop_coord}\n'
+                                                               f'{seq}\n')
+            else:
+                for species_index in range(len(header)):
+                    species_file_dict[species_index].write(f'>{chrom} {start_coord} {stop_coord}\n'
+                                                           f'{species_sequence[species_index]}\n')
             
             if processed_line_count % 1000 == 0:
                 elapsed_time = time.time() - start_time
@@ -118,7 +133,7 @@ def get_species_letters_from_coord(coord_filename, target_dirname):
         species_file.close()
     
     close_alignment_files(alignment_file_dict)
-
+    
     print(f'-> #N substituted: {number_of_n_substituted}\n'
           f'=> Done!')
 
@@ -127,5 +142,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('coord_file')
     parser.add_argument('target_dirname')
+    parser.add_argument('--ignore-noninformative', action='store_true')
     args = parser.parse_args()
-    get_species_letters_from_coord(args.coord_file, args.target_dirname)
+    get_species_letters_from_coord(args.coord_file, args.target_dirname, args.ignore_noninformative)
