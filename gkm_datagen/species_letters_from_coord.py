@@ -62,6 +62,7 @@ def get_species_letters_from_coord(coord_filename, target_dirname, ignore_noninf
     print(f'-> ignore noninformative: {ignore_noninformative}')
     
     species_file_dict = {}
+    informative_seq_file_dict = {}
     
     total_line_count = get_line_count(coord_filename)
     print(f'=> coordinate_filename: {coord_filename}\n'
@@ -77,12 +78,15 @@ def get_species_letters_from_coord(coord_filename, target_dirname, ignore_noninf
             species_filename = f'{index}_{species_code}.fa.ir'
             print('=> Creating {} under {}'.format(species_filename, dir_name))
             species_file_dict[index] = open(os.path.join(dir_name, species_filename), 'w')
+            
+            informative_seq_filename = f'{index}_{species_code}.informative'
+            informative_seq_file_dict[index] = open(os.path.join(dir_name, informative_seq_filename), 'w')
         
         processed_line_count = 0
         start_time = time.time()
         number_of_n_substituted = 0
         
-        for line in coord_file:
+        for line_index, line in enumerate(coord_file):
             processed_line_count += 1
             tokens = line.strip().split()
             chrom, start_coord, stop_coord = tokens[0], int(tokens[1]), int(tokens[2])
@@ -117,6 +121,7 @@ def get_species_letters_from_coord(coord_filename, target_dirname, ignore_noninf
                     if is_informative_sequence(seq):
                         species_file_dict[species_index].write(f'>{chrom} {start_coord} {stop_coord}\n'
                                                                f'{seq}\n')
+                        informative_seq_file_dict[species_index].write(f'{line_index}\n')
             else:
                 for species_index in range(len(header)):
                     species_file_dict[species_index].write(f'>{chrom} {start_coord} {stop_coord}\n'
@@ -131,6 +136,10 @@ def get_species_letters_from_coord(coord_filename, target_dirname, ignore_noninf
     for filename, species_file in species_file_dict.items():
         print(f'=> Closing {filename}')
         species_file.close()
+        
+    for filename, file in informative_seq_file_dict.items():
+        print(f'=> Closing {filename}')
+        file.close()
     
     close_alignment_files(alignment_file_dict)
     
