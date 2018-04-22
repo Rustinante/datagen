@@ -124,8 +124,11 @@ def get_species_letters_from_coord(coord_filename, target_dirname, ignore_noninf
                         informative_seq_file_dict[species_index].write(f'{line_index}\n')
             else:
                 for species_index in range(len(header)):
+                    seq = species_sequence[species_index]
                     species_file_dict[species_index].write(f'>{chrom} {start_coord} {stop_coord}\n'
-                                                           f'{species_sequence[species_index]}\n')
+                                                           f'{seq}\n')
+                    if is_informative_sequence(seq):
+                        informative_seq_file_dict[species_index].write(f'{line_index}\n')
             
             if processed_line_count % 1000 == 0:
                 elapsed_time = time.time() - start_time
