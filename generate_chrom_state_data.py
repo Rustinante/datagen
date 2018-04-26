@@ -90,7 +90,7 @@ def generate(coord_filename):
         num_samples = len(states_list)
         
         # uint8 is enough because there are only 100 states
-        feature_data = feature_group.create_dataset('data', (num_samples, num_basepairs), dtype='uint8')
+        feature_data = feature_group.create_dataset('data', (num_samples, num_basepairs), dtype='uint8', compression='gzip')
         
         for index, vector in enumerate(states_list):
             feature_data[index] = vector
