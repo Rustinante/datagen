@@ -67,7 +67,7 @@ def generate(coord_filename):
                 if not result:
                     raise ValueError(f'failed to find the chrom state for {chrom} coord: {coord_to_search}')
                 
-                line, byte_offset = result
+                line, start_byteoffset_hint = result
                 start, end_exclusive = get_start_end_location_from_line(line)
                 state_value = chrom_state_mapping[line.strip().split()[-1]]
                 
