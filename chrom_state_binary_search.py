@@ -3,6 +3,7 @@ import argparse
 
 
 def get_start_end_location_from_line(line):
+    # returns start, end_exclusive
     tokens = line.split()
     return int(tokens[1]), int(tokens[2])
 
@@ -65,7 +66,7 @@ def binary_search(low, high, number, file):
         return binary_search(mid, high, number, file)
 
 
-def search(file, number, filename):
+def search(file, number, file_byte_size):
     """
     Performs binary search on the lines of the chr*_segmentation file for the line containing the nucleotide coordinate number.
     Each line of the file will contain four items separated by either tabs or white spaces:
@@ -74,7 +75,7 @@ def search(file, number, filename):
 
     :param file: a file object that's opened in read mode
     :param number: the nucleotide coordinate number we're searching for
-    :param filename: the name of the file that's opened that contains the maf sequence e.g. chr19_segmentation.bed
+    :param file_byte_size: can be obtained by calling os.stat(filename).st_size
 
     :return: (line, byte-offset) or None
     
@@ -88,7 +89,7 @@ def search(file, number, filename):
     file.seek(start_offset)
     
     # high is the byte offset of the last byte in the file.
-    high = os.stat(filename).st_size - 1
+    high = file_byte_size - 1
     
     return binary_search(start_offset, high, number, file)
 
@@ -100,8 +101,9 @@ if __name__ == '__main__':
     parser.add_argument('filename')
     parser.add_argument('number', type=int)
     args = parser.parse_args()
+    byte_size = os.stat(args.filename).st_size
     with open(args.filename, 'r') as sequence_file:
-        result = search(file=sequence_file, number=args.number, filename=args.filename)
+        result = search(file=sequence_file, number=args.number, file_byte_size=byte_size)
         if result:
             print(result[0].split(), result[1])
         else:
