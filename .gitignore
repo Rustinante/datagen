@@ -24,3 +24,4 @@ temp4.py
 *.fa
 *.mult_species
 wgEncode*
+*.bed
