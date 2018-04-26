@@ -67,18 +67,22 @@ def binary_search(low, high, number, file):
 
 def search(file, number, filename):
     """
-    Performs binary search on the lines of the file for the line containing the nucleotide coordinate number.
+    Performs binary search on the lines of the chr*_segmentation file for the line containing the nucleotide coordinate number.
+    Each line of the file will contain four items separated by either tabs or white spaces:
+    chromosome number, start(inclusive), end(exclusive), conservation state
+    e.g. chr19 0 60000 U96
 
     :param file: a file object that's opened in read mode
     :param number: the nucleotide coordinate number we're searching for
-    :param filename: the name of the file that's opened that contains the maf sequence e.g. chr2_maf_sequence.csv
+    :param filename: the name of the file that's opened that contains the maf sequence e.g. chr19_segmentation.bed
 
     :return: (line, byte-offset) or None
+    
     If there is a line containing the number, the function returns a tuple whose first element is the line we
     are searching for as a string ending with a newline character, and whose second element is the byte offset
     of the first byte of the line from the beginning of the file.
-
-    It returns None if there is no line containing the number.
+    
+    Otherwise returns None.
     """
     start_offset = 0
     file.seek(start_offset)
@@ -90,6 +94,7 @@ def search(file, number, filename):
 
 
 if __name__ == '__main__':
+    # This is statement is used for debugging
     parser = argparse.ArgumentParser()
     # an example filename would be chr19_segmentation.bed
     parser.add_argument('filename')
