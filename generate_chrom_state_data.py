@@ -28,14 +28,26 @@ def get_chrom_state_mapping():
     return mapping
 
 
+def get_line_count(filename):
+    count = 0
+    with open(filename, 'r') as file:
+        for _ in file:
+            count += 1
+    return count
+
+
 def generate(coord_filename):
     chrom_state_file_dict = open_chrom_state_files()
     flanking_number = 400
     chrom_state_mapping = get_chrom_state_mapping()
     states_list = []
     num_basepairs = 1000
+    
+    line_count = get_line_count(coord_filename)
+    
+    stamp = time.time()
     with open(coord_filename, 'r') as coord_file:
-        for line in coord_file:
+        for line_index, line in enumerate(coord_file):
             tokens = line.split()
             chrom, start, end_exclusive = tokens[0], int(tokens[1]), int(tokens[2])
             real_start = start - flanking_number
@@ -61,6 +73,12 @@ def generate(coord_filename):
                 coord_to_search += repetitions
             
             states_list.append(states)
+            
+            if line_index % 1000 == 0:
+                print(f'{line_index}/{line_count} = {line_index/line_count:.2%} in {time.time() - stamp:.4f} s',
+                      end='\r')
+    
+    print('')
     
     close_file_dict(chrom_state_file_dict)
     
