@@ -8,21 +8,21 @@ def get_start_end_location_from_line(line):
     return int(tokens[1]), int(tokens[2])
 
 
-def scan_through_line_for_number(alignment_file, start_line_hint, number):
-    alignment_file.seek(start_line_hint)
+def scan_through_line_for_number(alignment_file, start_byteoffset_hint, number):
+    alignment_file.seek(start_byteoffset_hint)
 
     for line in alignment_file:
         start, end_exclusive = get_start_end_location_from_line(line)
 
         if start <= number < end_exclusive:
-            return line, start_line_hint
+            return line, start_byteoffset_hint
 
         # The lines are sorted so if the current location is already greater than the one
         # we're searching for we know what we search does not exist.
         elif number < start:
             return None
 
-        start_line_hint += len(bytes(line, 'ascii'))
+        start_byteoffset_hint += len(bytes(line, 'ascii'))
 
     return None
 

@@ -3,7 +3,7 @@ import numpy as np
 import time
 import h5py
 import os
-from chrom_state_binary_search import search, get_start_end_location_from_line
+from chrom_state_binary_search import search, get_start_end_location_from_line, scan_through_line_for_number
 
 
 def open_chrom_state_files():
@@ -53,12 +53,16 @@ def generate(coord_filename):
             real_start = start - flanking_number
             real_end_exclusive = end_exclusive + flanking_number
             assert num_basepairs == real_end_exclusive - real_start
-            states = np.zeros(num_basepairs)
+            states = np.zeros(num_basepairs, dtype=np.int8)
             collected_basepair_count = 0
             coord_to_search = real_start
+            start_byteoffset_hint = None
+            file, file_bytesize = chrom_state_file_dict[chrom]
             while collected_basepair_count < num_basepairs:
-                file, file_bytesize = chrom_state_file_dict[chrom]
-                result = search(file, coord_to_search, file_bytesize)
+                if start_byteoffset_hint:
+                    result = scan_through_line_for_number(file, start_byteoffset_hint, coord_to_search)
+                else:
+                    result = search(file, coord_to_search, file_bytesize)
                 
                 if not result:
                     raise ValueError(f'failed to find the chrom state for {chrom} coord: {coord_to_search}')
