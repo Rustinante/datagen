@@ -5,6 +5,8 @@ import h5py
 import os
 from chrom_state_binary_search import search, get_start_end_location_from_line, scan_through_line_for_number
 
+num_chromatin_states = 100
+
 
 def open_chrom_state_files():
     file_dict = {}
@@ -21,10 +23,12 @@ def close_file_dict(file_dict):
         file.close()
 
 
-def get_chrom_state_mapping():
+def get_chrom_state_onehot_mapping():
     mapping = {}
-    for i in range(100):
-        mapping[f'U{i+1}'] = i
+    for i in range(num_chromatin_states):
+        encoding = np.zeros(num_chromatin_states, dtype='uint8')
+        encoding[i] = 1
+        mapping[f'U{i+1}'] = encoding
     return mapping
 
 
@@ -36,10 +40,10 @@ def get_line_count(filename):
     return count
 
 
-def generate(coord_filename):
+def generate_one_hot(coord_filename):
     chrom_state_file_dict = open_chrom_state_files()
     flanking_number = 400
-    chrom_state_mapping = get_chrom_state_mapping()
+    chrom_state_mapping = get_chrom_state_onehot_mapping()
     states_list = []
     num_basepairs = 1000
     
@@ -54,7 +58,7 @@ def generate(coord_filename):
             real_start = start - flanking_number
             real_end_exclusive = end_exclusive + flanking_number
             assert num_basepairs == real_end_exclusive - real_start
-            states = np.zeros(num_basepairs, dtype=np.int8)
+            states = np.zeros((num_basepairs, num_chromatin_states), dtype=np.int8)
             collected_basepair_count = 0
             coord_to_search = real_start
             start_byteoffset_hint = None
@@ -97,11 +101,11 @@ def generate(coord_filename):
         num_samples = len(states_list)
         
         # uint8 is enough because there are only 100 states
-        feature_data = feature_group.create_dataset('data', (num_samples, num_basepairs), dtype='uint8',
+        feature_data = feature_group.create_dataset('data', (num_samples, num_basepairs, num_chromatin_states), dtype='uint8',
                                                     compression='gzip')
         
-        for index, vector in enumerate(states_list):
-            feature_data[index] = vector
+        for index, matrix in enumerate(states_list):
+            feature_data[index] = matrix
             
             if index % 1000 == 0:
                 print(f'{index}/{num_samples} in {time.time()-stamp:5f}s', end='\r')
@@ -113,4 +117,4 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('coord_filename')
     args = parser.parse_args()
-    generate(args.coord_filename)
+    generate_one_hot(args.coord_filename)
