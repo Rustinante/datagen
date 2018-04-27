@@ -46,6 +46,7 @@ def generate(coord_filename):
     line_count = get_line_count(coord_filename)
     
     stamp = time.time()
+    num_missing_states = 0
     with open(coord_filename, 'r') as coord_file:
         for line_index, line in enumerate(coord_file):
             tokens = line.split()
@@ -65,9 +66,11 @@ def generate(coord_filename):
                     result = search(file, coord_to_search, file_bytesize)
                 
                 if not result:
-                    raise ValueError(f'failed to find the chrom state for {chrom} coord: {coord_to_search}')
+                    line = f'{chrom} {coord_to_search} {coord_to_search + 1} U96'
+                    num_missing_states += 1
+                else:
+                    line, start_byteoffset_hint = result
                 
-                line, start_byteoffset_hint = result
                 start, end_exclusive = get_start_end_location_from_line(line)
                 state_value = chrom_state_mapping[line.strip().split()[-1]]
                 
@@ -82,7 +85,7 @@ def generate(coord_filename):
                 print(f'{line_index}/{line_count} = {line_index/line_count:.2%} in {time.time() - stamp:.4f} s',
                       end='\r')
     
-    print('')
+    print(f'\n-> Number of missing states: {num_missing_states}')
     
     close_file_dict(chrom_state_file_dict)
     
