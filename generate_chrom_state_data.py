@@ -5,6 +5,8 @@ import h5py
 import os
 from chrom_state_binary_search import search, get_start_end_location_from_line, scan_through_line_for_number
 
+num_chromatin_states = 100
+
 
 def open_chrom_state_files():
     file_dict = {}
@@ -12,6 +14,8 @@ def open_chrom_state_files():
     for i in range(1, 23):
         filename = f'chr{i}_segmentation.bed'
         file_dict[f'chr{i}'] = open(filename, 'r'), os.stat(filename).st_size
+    file_dict['chrX'] = open('chrX_segmentation.bed', 'r')
+    file_dict['chrY'] = open('chrY_segmentation.bed', 'r')
     
     return file_dict
 
@@ -23,7 +27,7 @@ def close_file_dict(file_dict):
 
 def get_chrom_state_mapping():
     mapping = {}
-    for i in range(100):
+    for i in range(num_chromatin_states):
         mapping[f'U{i+1}'] = i
     return mapping
 

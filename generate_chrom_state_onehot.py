@@ -14,6 +14,8 @@ def open_chrom_state_files():
     for i in range(1, 23):
         filename = f'chr{i}_segmentation.bed'
         file_dict[f'chr{i}'] = open(filename, 'r'), os.stat(filename).st_size
+    file_dict['chrX'] = open('chrX_segmentation.bed', 'r')
+    file_dict['chrY'] = open('chrY_segmentation.bed', 'r')
     
     return file_dict
 
@@ -58,7 +60,7 @@ def generate_one_hot(coord_filename):
             real_start = start - flanking_number
             real_end_exclusive = end_exclusive + flanking_number
             assert num_basepairs == real_end_exclusive - real_start
-            states = np.zeros((num_basepairs, num_chromatin_states), dtype=np.int8)
+            states = np.zeros((num_basepairs, num_chromatin_states), dtype='uint8')
             collected_basepair_count = 0
             coord_to_search = real_start
             start_byteoffset_hint = None
