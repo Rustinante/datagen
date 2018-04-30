@@ -14,8 +14,8 @@ def open_chrom_state_files():
     for i in range(1, 23):
         filename = f'chr{i}_segmentation.bed'
         file_dict[f'chr{i}'] = open(filename, 'r'), os.stat(filename).st_size
-    file_dict['chrX'] = open('chrX_segmentation.bed', 'r')
-    file_dict['chrY'] = open('chrY_segmentation.bed', 'r')
+    file_dict['chrX'] = open('chrX_segmentation.bed', 'r'), os.stat('chrX_segmentation.bed').st_size
+    file_dict['chrY'] = open('chrY_segmentation.bed', 'r'), os.stat('chrY_segmentation.bed').st_size
     
     return file_dict
 
