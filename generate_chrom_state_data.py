@@ -56,8 +56,7 @@ def generate(coord_filename):
     with open(coord_filename, 'r') as coord_file, h5py.File('chrom_states.hdf5', 'w') as hdf5_file:
         feature_group = hdf5_file.create_group('state')
         # uint8 is enough because there are only 100 states
-        feature_data = feature_group.create_dataset('data', (line_count, num_basepairs, num_chromatin_states),
-                                                    dtype='uint8')
+        feature_data = feature_group.create_dataset('data', (line_count, num_basepairs), dtype='uint8')
         
         for line_index, line in enumerate(coord_file):
             tokens = line.split()
@@ -91,21 +90,21 @@ def generate(coord_filename):
                 coord_to_search += repetitions
             
             states_list.append(states)
-
+            
             if line_index % 100 == 1:
-                for matrix in states_list:
-                    feature_data[serializing_index] = matrix
+                for vector in states_list:
+                    feature_data[serializing_index] = vector
                     serializing_index += 1
-    
+                
                 states_list = []
                 print(f'{line_index}/{line_count} = {line_index/line_count:.2%} in {time.time() - stamp:.4f}s'
                       f' current serializing index: {serializing_index}',
                       end='\r')
-                
+    
     print(f'\n-> Number of missing states: {num_missing_states}')
     
     close_file_dict(chrom_state_file_dict)
-    
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
