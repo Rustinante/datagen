@@ -59,8 +59,7 @@ def generate_one_hot(coord_filename):
         feature_group = hdf5_file.create_group('state')
         # uint8 is enough because there are only 100 states
         feature_data = feature_group.create_dataset('data', (line_count, num_basepairs, num_chromatin_states),
-                                                    dtype='uint8',
-                                                    compression='gzip', compression_opts=1)
+                                                    dtype='uint8')
         
         for line_index, line in enumerate(coord_file):
             tokens = line.split()
@@ -95,7 +94,7 @@ def generate_one_hot(coord_filename):
             
             states_list.append(states)
             
-            if line_index % 1000 == 1:
+            if line_index % 100 == 1:
                 for matrix in states_list:
                     feature_data[serializing_index] = matrix
                     serializing_index += 1
