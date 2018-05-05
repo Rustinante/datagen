@@ -56,6 +56,10 @@ def is_informative_sequence(seq):
     return False
 
 
+def generate_informative_species_filename(species_index, species_code):
+    return f'{species_index}_{species_code}.informative'
+
+
 def get_species_letters_from_coord(coord_filename, target_dirname, ignore_noninformative):
     checkpoint_time_str = time.strftime('%a %b %d %Y %H:%M:%S UTC%z', time.localtime(time.time()))
     print('Current time: {}'.format(checkpoint_time_str))
@@ -79,7 +83,7 @@ def get_species_letters_from_coord(coord_filename, target_dirname, ignore_noninf
             print('=> Creating {} under {}'.format(species_filename, dir_name))
             species_file_dict[index] = open(os.path.join(dir_name, species_filename), 'w')
             
-            informative_seq_filename = f'{index}_{species_code}.informative'
+            informative_seq_filename = generate_informative_species_filename(index, species_code)
             informative_seq_file_dict[index] = open(os.path.join(dir_name, informative_seq_filename), 'w')
         
         processed_line_count = 0
@@ -139,7 +143,7 @@ def get_species_letters_from_coord(coord_filename, target_dirname, ignore_noninf
     for filename, species_file in species_file_dict.items():
         print(f'=> Closing {filename}')
         species_file.close()
-        
+    
     for filename, file in informative_seq_file_dict.items():
         print(f'=> Closing {filename}')
         file.close()

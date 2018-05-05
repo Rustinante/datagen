@@ -22,23 +22,42 @@ def map_line_to_coord_triple(line):
         return tokens[0], int(tokens[1]), int(tokens[2])
 
 
-def downsample(in_filename, out_filename, downsample_coord_filename):
+def convert_to_final_rep_and_downsample(downsample_coord_filename, in_filename, out_filename,
+                                        species_informative_filepath=None, species_informative_output_filepath=None):
     coord_set = set()
     with open(downsample_coord_filename, 'r') as coord_file:
         for line in coord_file:
             chrom, start, stop = map_line_to_coord_triple(line)
             coord_set.add((chrom, start, stop))
     
-    with open(in_filename, 'r') as infile, open(out_filename, 'w') as outfile:
-        for index, line in enumerate(infile):
-            triple = map_line_to_coord_triple(line)
-            if triple in coord_set:
-                chrom, start, stop = triple
-                outfile.write(f'>{chrom}:{start}-{stop}\n')
-                outfile.write(infile.readline())
-            else:
-                # Discard the current line and the next line
-                infile.readline()
+    if species_informative_filepath:
+        assert species_informative_output_filepath
+        with open(in_filename, 'r') as infile, open(out_filename, 'w') as outfile, \
+                open(species_informative_filepath, 'r') as informative_source, \
+                open(species_informative_output_filepath, 'w') as informative_output:
+            
+            for line, informative_line_index in zip(infile, informative_source):
+                triple = map_line_to_coord_triple(line)
+                if triple in coord_set:
+                    chrom, start, stop = triple
+                    outfile.write(f'>{chrom}:{start}-{stop}\n')
+                    outfile.write(infile.readline())
+                    informative_output.write(informative_line_index)
+                else:
+                    # Discard the current line and the next line
+                    # Do not have to read another line from the informative source file as each informative line takes only one line
+                    infile.readline()
+    else:
+        with open(in_filename, 'r') as infile, open(out_filename, 'w') as outfile:
+            for line in infile:
+                triple = map_line_to_coord_triple(line)
+                if triple in coord_set:
+                    chrom, start, stop = triple
+                    outfile.write(f'>{chrom}:{start}-{stop}\n')
+                    outfile.write(infile.readline())
+                else:
+                    # Discard the current line and the next line
+                    infile.readline()
 
 
 def create_target_filename(filename, purpose, label):
@@ -73,7 +92,7 @@ def determine_downsample_ratio(coord_filename):
         return 1.
     else:
         return max_samples / num_samples
-    
+
 
 def transport_files(source_dirname, target_dirname):
     """
@@ -117,17 +136,38 @@ def transport_files(source_dirname, target_dirname):
             for filename in source_subdir_files:
                 if filename.endswith('.fa.ir'):
                     suffix_len = len('.ir')
-                    target_filepath = os.path.join(target_sub_dirname,
-                                                   create_target_filename(filename[:-suffix_len - 1], purpose, label))
+                    
                     source_filepath = os.path.join(source_sub_dirname, filename)
                     
                     source_downsampled_filepath = os.path.join(source_downsample_sub_dirname,
                                                                get_filename_with_downsample_suffix(filename, downsample_ratio))
-                    downsample(source_filepath, source_downsampled_filepath, downsampled_coord_filename)
                     
-                    print(f'=> Copying {source_downsampled_filepath} to {target_filepath}')
-                    shutil.copyfile(source_downsampled_filepath, target_filepath)
+                    target_filepath = os.path.join(target_sub_dirname,
+                                                   create_target_filename(filename[:-suffix_len - 1], purpose, label))
                     
+                    species_informative_filename = filename[:-len('.fa.ir') - 1] + '.informative'
+                    species_informative_filepath = os.path.join(source_sub_dirname, species_informative_filename)
+                    
+                    if os.path.isfile(species_informative_filepath):
+                        source_species_informative_donwsampled_filepath = os.path.join(
+                            source_downsample_sub_dirname,
+                            get_filename_with_downsample_suffix(species_informative_filename, downsample_ratio))
+                        target_species_informative_filename = os.path.join(target_sub_dirname, species_informative_filename)
+                        
+                        convert_to_final_rep_and_downsample(downsampled_coord_filename, source_filepath, source_downsampled_filepath,
+                                                            species_informative_filepath,
+                                                            source_species_informative_donwsampled_filepath)
+                        print(f'=> Copying {source_downsampled_filepath} to {target_filepath}')
+                        shutil.copyfile(source_downsampled_filepath, target_filepath)
+                        print(f'=> Copying {source_species_informative_donwsampled_filepath} to {target_species_informative_filename}')
+                        shutil.copyfile(source_species_informative_donwsampled_filepath, target_species_informative_filename)
+                    
+                    else:
+                        print(f'-> Did not find the corresponding species informative line index file {species_informative_filepath}')
+                        convert_to_final_rep_and_downsample(downsampled_coord_filename, source_filepath, source_downsampled_filepath)
+                        print(f'=> Copying {source_downsampled_filepath} to {target_filepath}')
+                        shutil.copyfile(source_downsampled_filepath, target_filepath)
+    
     print(f'=> Changing the working directory back to {original_dirname}')
     os.chdir(original_dirname)
 
