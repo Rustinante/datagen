@@ -14,14 +14,14 @@ def open_chrom_state_files():
     for i in range(1, 23):
         filename = f'chr{i}_segmentation.bed'
         file_dict[f'chr{i}'] = open(filename, 'r'), os.stat(filename).st_size
-    file_dict['chrX'] = open('chrX_segmentation.bed', 'r')
-    file_dict['chrY'] = open('chrY_segmentation.bed', 'r')
+    file_dict['chrX'] = open('chrX_segmentation.bed', 'r'), os.stat('chrX_segmentation.bed').st_size
+    file_dict['chrY'] = open('chrY_segmentation.bed', 'r'), os.stat('chrY_segmentation.bed').st_size
     
     return file_dict
 
 
 def close_file_dict(file_dict):
-    for file in file_dict.values():
+    for file, _ in file_dict.values():
         file.close()
 
 
@@ -51,13 +51,19 @@ def generate(coord_filename):
     
     stamp = time.time()
     num_missing_states = 0
-    with open(coord_filename, 'r') as coord_file:
+    serializing_index = 0
+    
+    with open(coord_filename, 'r') as coord_file, h5py.File('chrom_states.hdf5', 'w') as hdf5_file:
+        feature_group = hdf5_file.create_group('state')
+        # uint8 is enough because there are only 100 states
+        feature_data = feature_group.create_dataset('data', (line_count, num_basepairs), dtype='uint8')
+        
         for line_index, line in enumerate(coord_file):
             tokens = line.split()
             chrom, start, end_exclusive = tokens[0], int(tokens[1]), int(tokens[2])
             real_start = start - flanking_number
             real_end_exclusive = end_exclusive + flanking_number
-            assert num_basepairs == real_end_exclusive - real_start
+            # assert num_basepairs == real_end_exclusive - real_start
             states = np.zeros(num_basepairs, dtype=np.int8)
             collected_basepair_count = 0
             coord_to_search = real_start
@@ -85,32 +91,19 @@ def generate(coord_filename):
             
             states_list.append(states)
             
-            if line_index % 1000 == 0:
-                print(f'{line_index}/{line_count} = {line_index/line_count:.2%} in {time.time() - stamp:.4f} s',
+            if line_index % 100 == 1:
+                for vector in states_list:
+                    feature_data[serializing_index] = vector
+                    serializing_index += 1
+                
+                states_list = []
+                print(f'{line_index}/{line_count} = {line_index/line_count:.2%} in {time.time() - stamp:.4f}s'
+                      f' current serializing index: {serializing_index}',
                       end='\r')
     
     print(f'\n-> Number of missing states: {num_missing_states}')
     
     close_file_dict(chrom_state_file_dict)
-    
-    stamp = time.time()
-    print('=> Serializing...')
-    with h5py.File('chrom_states', 'w') as file:
-        feature_group = file.create_group('state')
-        
-        num_samples = len(states_list)
-        
-        # uint8 is enough because there are only 100 states
-        feature_data = feature_group.create_dataset('data', (num_samples, num_basepairs), dtype='uint8',
-                                                    compression='gzip')
-        
-        for index, vector in enumerate(states_list):
-            feature_data[index] = vector
-            
-            if index % 1000 == 0:
-                print(f'{index}/{num_samples} in {time.time()-stamp:5f}s', end='\r')
-    
-    print(f'\n=> Finished serializeing in {time.time()-stamp:.5f}s')
 
 
 if __name__ == '__main__':
