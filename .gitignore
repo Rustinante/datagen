@@ -14,7 +14,7 @@ valid_coord
 coord
 *.mat
 *.fasta
-
+*.txt
 gkm_fasta
 fasta_data/
 hg19_*
