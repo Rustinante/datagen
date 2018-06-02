@@ -93,7 +93,8 @@ def search(file, number, file_byte_size):
     Performs binary search on the lines of the file phastConsElements100way.txt for the line containing the
     nucleotide coordinate number.
     Each line of the file looks like the following:
-    585	chr1	11991	11995	lod=12	240
+    # 585 chr1 11991 11995 lod=12 240
+    # Note that in the actual file the spaces are actually tab characters.
 
     :param file: a file object that's opened in read mode
     :param number: the nucleotide coordinate number we're searching for

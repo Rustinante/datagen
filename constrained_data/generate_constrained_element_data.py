@@ -5,8 +5,6 @@ import h5py
 import os
 from constrained_data_binary_search import search, get_start_end_location_from_line, scan_through_line_for_number
 
-num_chromatin_states = 100
-
 
 def open_chrom_files():
     file_dict = {}
@@ -34,7 +32,7 @@ def get_line_count(filename):
     return count
 
 
-def generate(coord_filename):
+def generate(coord_filename, output_filename):
     chrom_file_dict = open_chrom_files()
     flanking_number = 400
     states_list = []
@@ -43,10 +41,11 @@ def generate(coord_filename):
     line_count = get_line_count(coord_filename)
     
     stamp = time.time()
-    num_missing_states = 0
     serializing_index = 0
     
-    with open(coord_filename, 'r') as coord_file, h5py.File('constrained_elements.hdf5', 'w') as hdf5_file:
+    zero_state_count = one_state_count = 0
+    
+    with open(coord_filename, 'r') as coord_file, h5py.File(output_filename, 'w') as hdf5_file:
         feature_group = hdf5_file.create_group('state')
         # uint8 is enough because there are only 100 states
         feature_data = feature_group.create_dataset('data', (line_count, num_basepairs), dtype='uint8')
@@ -76,13 +75,23 @@ def generate(coord_filename):
                     state_value = 1
                     _, current_end_exclusive = get_start_end_location_from_line(line)
                     repetitions = min(current_end_exclusive, real_end_exclusive) - coord_to_search
+                    # gathering stats about how many ones there are
+                    one_state_count += repetitions
                 else:
                     state_value = 0
                     if line:
+                        # When the coordinate to search is absent in the file, if a line is returned
+                        # then the start coordinate in the line will be the smallest start coordinate present in the file
+                        # that is larger than the target coordinate.
                         current_end_exclusive, _ = get_start_end_location_from_line(line)
                         repetitions = min(current_end_exclusive, real_end_exclusive) - coord_to_search
                     else:
+                        # If the target coordinate is not found in the file and no line is returned,
+                        # it means that there is no start coordinate in the file that is larger than the target coordinate.
                         repetitions = real_end_exclusive - coord_to_search
+                        
+                    # gathering stats about how many zeros there are
+                    zero_state_count += repetitions
                 
                 states[collected_basepair_count:collected_basepair_count + repetitions] = state_value
                 collected_basepair_count += repetitions
@@ -100,13 +109,14 @@ def generate(coord_filename):
                       f' current serializing index: {serializing_index}',
                       end='\r')
     
-    print(f'\n-> Number of missing states: {num_missing_states}')
-    
+    print(f'\n#ones: {one_state_count}  #zeros: {zero_state_count}')
     close_file_dict(chrom_file_dict)
+    print('=> Done')
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('coord_filename')
+    parser.add_argument('output_filename')
     args = parser.parse_args()
-    generate(args.coord_filename)
+    generate(args.coord_filename, args.output_filename)
