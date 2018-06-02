@@ -89,7 +89,7 @@ def generate(coord_filename, output_filename):
                         # If the target coordinate is not found in the file and no line is returned,
                         # it means that there is no start coordinate in the file that is larger than the target coordinate.
                         repetitions = real_end_exclusive - coord_to_search
-                        
+                    
                     # gathering stats about how many zeros there are
                     zero_state_count += repetitions
                 
@@ -114,7 +114,7 @@ def generate(coord_filename, output_filename):
             for vector in states_list:
                 feature_data[serializing_index] = vector
                 serializing_index += 1
-    
+            
             print(f'{serializing_index}/{line_count} = {serializing_index/line_count:.2%} in {time.time() - stamp:.4f}s'
                   f' current serializing index: {serializing_index}')
     
