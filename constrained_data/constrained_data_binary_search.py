@@ -8,28 +8,31 @@ def get_start_end_location_from_line(line):
     return int(tokens[2]), int(tokens[3])
 
 
-def scan_through_line_for_number(alignment_file, start_byteoffset_hint, number):
-    alignment_file.seek(start_byteoffset_hint)
+def scan_through_line_for_number(constrained_element_file, start_byteoffset_hint, number):
+    constrained_element_file.seek(start_byteoffset_hint)
     
-    for line in alignment_file:
+    for line in constrained_element_file:
         start, end_exclusive = get_start_end_location_from_line(line)
         
         if start <= number < end_exclusive:
-            return line, start_byteoffset_hint
+            return True, line, start_byteoffset_hint
         
         # The lines are sorted so if the current location is already greater than the one
         # we're searching for we know what we search does not exist.
+        # We also know that the start coordinate in line at the hint is <= the target coordinate,
+        # so the moment number < start we know the line is the first line that has a start coordinate
+        # greater than the target coordinate.
         elif number < start:
-            return None
+            return False, line, start_byteoffset_hint
         
         start_byteoffset_hint += len(bytes(line, 'ascii'))
     
-    return None
+    return False, None, None
 
 
 def binary_search(low, high, number, file):
     if low > high:
-        return None
+        raise ValueError(f'The low argument ({low}) is larger than the high argument ({high})')
     
     # There is only one potential candidate.
     if low == high:
@@ -37,7 +40,26 @@ def binary_search(low, high, number, file):
         file.seek(low)
         line = file.readline()
         start, end_exclusive = get_start_end_location_from_line(line)
-        return (line, low) if start <= number < end_exclusive else None
+        if start <= number < end_exclusive:
+            return True, line, low
+        elif number < start:
+            # The current line must be the first line that contains a start coordinate higher than the target coordinate,
+            # because even if there is a line L preceding the current line, the end coordinate in L must be less than the target
+            # coordinate due to the nature of binary search.
+            return False, line, low
+        else:
+            # number >= end_exclusive
+            # Check if there is a line after the current line.
+            # If there is none, then there is no line containing a start coordinate greater than the target coordiante.
+            # If there is a line L after the current line, the start coordinate in L must be larger than the target coordinate.
+            # So the line L is the first line that contiains a start coordinate higher than the target number.
+            next_line = file.readline()
+            if not next_line or next_line == '\n':
+                return False, None, None
+            else:
+                return False, next_line, low + len(bytes(line, 'ascii'))
+        
+        # return (True, line, low) if start <= number < end_exclusive else None
     
     # There are at least two bytes to work with.
     mid = low + (high - low) // 2
@@ -59,7 +81,7 @@ def binary_search(low, high, number, file):
     start, end_exclusive = get_start_end_location_from_line(line)
     # print(low, original_mid, mid, high, location)
     if start <= number < end_exclusive:
-        return line, mid
+        return True, line, mid
     elif start > number:
         return binary_search(low, original_mid, number, file)
     else:
