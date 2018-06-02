@@ -108,6 +108,15 @@ def generate(coord_filename, output_filename):
                 print(f'{line_index}/{line_count} = {line_index/line_count:.2%} in {time.time() - stamp:.4f}s'
                       f' current serializing index: {serializing_index}',
                       end='\r')
+        
+        # Serialize the remaining data
+        if states_list:
+            for vector in states_list:
+                feature_data[serializing_index] = vector
+                serializing_index += 1
+    
+            print(f'{serializing_index}/{line_count} = {serializing_index/line_count:.2%} in {time.time() - stamp:.4f}s'
+                  f' current serializing index: {serializing_index}')
     
     print(f'\n#ones: {one_state_count}  #zeros: {zero_state_count}')
     close_file_dict(chrom_file_dict)
