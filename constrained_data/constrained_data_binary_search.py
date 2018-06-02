@@ -129,6 +129,9 @@ if __name__ == '__main__':
     with open(args.filename, 'r') as sequence_file:
         result = search(file=sequence_file, number=args.number, file_byte_size=byte_size)
         if result:
-            print(result[0].split(), result[1])
+            if result[1]:
+                print(result[0], result[1].split(), result[2])
+            else:
+                print(result[0], result[1], result[2])
         else:
             print('Not found')
