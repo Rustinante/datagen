@@ -13,14 +13,15 @@ if __name__ == '__main__':
     chrom_file_dict = create_chrom_state_files()
     
     linecount = 0
+    print('=> Getting total line count...')
     with open('phastConsElements100way.txt', 'r') as file:
         for _ in file:
             linecount += 1
     
+    print('=> Splitting into chromosomes...')
     error_set = set()
     error_count = 0
     with open('phastConsElements100way.txt', 'r') as file:
-        
         for index, line in enumerate(file):
             tokens = line.split()
             chrom = tokens[1]
