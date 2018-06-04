@@ -103,6 +103,8 @@ def generate(coord_filename, output_filename):
             if line_index % 100 == 1:
                 for vector in states_list:
                     feature_data[serializing_index] = vector
+                    # For the reverse complement strand
+                    feature_data[serializing_index + line_count] = vector[::-1]
                     serializing_index += 1
                 
                 states_list = []
