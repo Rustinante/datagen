@@ -48,7 +48,8 @@ def generate(coord_filename, output_filename):
     with open(coord_filename, 'r') as coord_file, h5py.File(output_filename, 'w') as hdf5_file:
         feature_group = hdf5_file.create_group('state')
         # uint8 is enough because there are only 100 states
-        feature_data = feature_group.create_dataset('data', (line_count, num_basepairs), dtype='uint8')
+        # mutiplying the line_count by 2 to accomodate the reverse complement strand
+        feature_data = feature_group.create_dataset('data', (line_count * 2, num_basepairs), dtype='uint8')
         
         for line_index, line in enumerate(coord_file):
             # each line will be of the form
@@ -113,6 +114,8 @@ def generate(coord_filename, output_filename):
         if states_list:
             for vector in states_list:
                 feature_data[serializing_index] = vector
+                # For the reverse complement strand
+                feature_data[serializing_index + line_count] = vector[::-1]
                 serializing_index += 1
             
             print(f'{serializing_index}/{line_count} = {serializing_index/line_count:.2%} in {time.time() - stamp:.4f}s'
