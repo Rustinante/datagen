@@ -96,7 +96,7 @@ def generate_counting_measure(coord_filename, output_filename):
             
             if line_index % 100 == 1:
                 for vector in states_list:
-                    # vector has shape num_channels x num_basepairs
+                    # vector has shape num_basepairs x num_channels
                     feature_data[serializing_index] = vector
                     feature_data[serializing_index + line_count] = vector[::-1, :]
                     serializing_index += 1
@@ -109,7 +109,7 @@ def generate_counting_measure(coord_filename, output_filename):
         # Serialze the remaining data
         if states_list:
             for vector in states_list:
-                # vector has shape num_channels x num_basepairs
+                # vector has shape num_basepairs x num_channels
                 feature_data[serializing_index] = vector
                 feature_data[serializing_index + line_count] = vector[::-1, :]
                 serializing_index += 1
