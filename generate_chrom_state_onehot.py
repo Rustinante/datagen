@@ -3,7 +3,7 @@ import numpy as np
 import time
 import h5py
 import os
-from chrom_state_binary_search import search, get_start_end_location_from_line, scan_through_line_for_number
+from conservation_state_binary_search import search, get_start_end_location_from_line, scan_through_line_for_number
 
 num_chromatin_states = 100
 
