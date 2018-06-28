@@ -33,7 +33,7 @@ def scan_through_line_for_number(alignment_file, start_line_hint, number):
 def binary_search(low, high, number, file):
     if low > high:
         return None
-
+    
     # There is only one potential candidate.
     if low == high:
         # Always make sure to seek to the actual offset that we want to examine.
@@ -43,12 +43,12 @@ def binary_search(low, high, number, file):
         if not location:
             return None
         return (line, low) if location == number else None
-
+    
     # There are at least two bytes to work with.
     mid = low + (high - low) // 2
     original_mid = mid
     file.seek(mid)
-
+    
     # Move right until the next new line character
     while file.read(1) != '\n':
         mid += 1
@@ -59,7 +59,7 @@ def binary_search(low, high, number, file):
     # When we hit the newline character, the mid would not be incremented in the while loop body,
     # so we have to increment it here to keep it synchronized with the position of the file pointer.
     mid += 1
-
+    
     line = file.readline()
     location = get_location_from_line(line)
     # print(low, original_mid, mid, high, location)
@@ -75,7 +75,7 @@ def binary_search(low, high, number, file):
         return binary_search(mid, high, number, file)
 
 
-def search(file, number, filename):
+def search(file, number, file_byte_size):
     """
     Performs binary search on the lines of the file for the line containing the nucleotide coordinate number.
 
@@ -84,7 +84,8 @@ def search(file, number, filename):
 
     :param file: a file object that's opened in read mode
     :param number: the nucleotide coordinate number we're searching for
-    :param filename: the name of the file that's opened that contains the maf sequence e.g. chr2_maf_sequence.csv
+    :param file_byte_size: can be obtained by calling os.stat(filename).st_size
+    an example filename is chr2_maf_sequence.csv
 
     :return: (line, byte-offset) or None
     If there is a line containing the number, the function returns a tuple whose first element is the line we
@@ -94,10 +95,10 @@ def search(file, number, filename):
     It returns None if there is no line containing the number.
     """
     file.seek(0)
-
+    
     # high is the byte offset of the last byte in the file.
-    high = os.stat(filename).st_size - 1
-
+    high = file_byte_size - 1
+    
     # Getting rid of the header line.
     start_index = 0
     while file.read(1) != '\n':
@@ -105,10 +106,10 @@ def search(file, number, filename):
         if start_index >= high:
             print('The header line extends onto or beyond the upper bound.')
             return None
-        
+    
     # Start at the position after the newline.
     start_index += 1
-
+    
     # print('binary search in range {} to {}'.format(start_index, high))
     return binary_search(start_index, high, number, file)
 
@@ -119,5 +120,6 @@ if __name__ == '__main__':
     parser.add_argument('filename')
     parser.add_argument('number')
     args = parser.parse_args()
+    
     with open(args.filename, 'r') as sequence_file:
-        print(search(file=sequence_file, number=int(args.number), filename=args.filename))
+        print(search(file=sequence_file, number=int(args.number), file_byte_size=os.stat(args.filename).st_size))

@@ -37,6 +37,7 @@ def extend_dataset(chr, purpose):
     
     print('=> coordinate_filename: {}'.format(coordinate_filename))
     print('=> alignment_filename: {}'.format(alignment_filename))
+    file_byte_size = os.stat(alignment_filename).st_size
 
     total_line_count = get_line_count(coordinate_filename)
     
@@ -75,7 +76,7 @@ def extend_dataset(chr, purpose):
                     continue
                 
                 elif not start_line_hint:
-                    result = search(alignment_file, coordinate, alignment_filename)
+                    result = search(alignment_file, coordinate, file_byte_size)
                 else:
                     result = scan_through_line_for_number(alignment_file=alignment_file,
                                                           start_line_hint=start_line_hint, number=coordinate)

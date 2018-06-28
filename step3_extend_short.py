@@ -128,7 +128,8 @@ def extend_dataset(chrom, purpose):
     hdf5_revcomp_filename = '{}_{}.revcomp.short.hdf5'.format(chrom, purpose)
     species_indices = [42, 74, 39, 21, 78, 69, 83, 94, 81, 96, 71, 17, 75, 12]
     number_of_species = len(species_indices)
-    
+
+    file_byte_size = os.stat(alignment_filename).st_size
     print('=> coordinate_filename: {}'.format(coordinate_filename))
     print('=> alignment_filename: {}'.format(alignment_filename))
     print('=> target hdf5_filename: {}'.format(hdf5_filename))
@@ -163,7 +164,7 @@ def extend_dataset(chrom, purpose):
                     continue
                 
                 elif not start_line_hint:
-                    result = search(alignment_file, coordinate, alignment_filename)
+                    result = search(alignment_file, coordinate, file_byte_size)
                 else:
                     result = scan_through_line_for_number(alignment_file=alignment_file,
                                                           start_line_hint=start_line_hint, number=coordinate)

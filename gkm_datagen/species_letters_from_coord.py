@@ -97,11 +97,12 @@ def get_species_letters_from_coord(coord_filename, target_dirname, ignore_noninf
             alignment_file = alignment_file_dict[chrom]
             
             species_sequence = defaultdict(str)
-            
+
+            file_byte_size = os.stat(get_alignment_filename(chrom)).st_size
             start_line_hint = None
             for letter_index, coordinate in enumerate(range(start_coord, stop_coord)):
                 if not start_line_hint:
-                    result = search(alignment_file, coordinate, get_alignment_filename(chrom))
+                    result = search(alignment_file, coordinate, file_byte_size)
                 else:
                     result = scan_through_line_for_number(alignment_file=alignment_file,
                                                           start_line_hint=start_line_hint, number=coordinate)

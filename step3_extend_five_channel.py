@@ -104,6 +104,7 @@ def extend_dataset(chr, purpose):
     print('=> coordinate_filename: {}'.format(coordinate_filename))
     print('=> alignment_filename: {}'.format(alignment_filename))
     print('=> target hdf5_filename: {}'.format(hdf5_filename))
+    file_byte_size = os.stat(alignment_filename).st_size
     
     with open(coordinate_filename, 'r') as file, open(alignment_filename, 'r') as alignment_file:
         header = alignment_file.readline().strip().split(',')
@@ -136,7 +137,7 @@ def extend_dataset(chr, purpose):
                     continue
                 
                 elif not start_line_hint:
-                    result = search(alignment_file, coordinate, alignment_filename)
+                    result = search(alignment_file, coordinate, file_byte_size)
                 else:
                     result = scan_through_line_for_number(alignment_file=alignment_file,
                                                           start_line_hint=start_line_hint, number=coordinate)
