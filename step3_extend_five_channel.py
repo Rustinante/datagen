@@ -194,9 +194,9 @@ def extend_dataset(chrom, purpose):
                 
                 elapsed_time = time.time() - start_time
                 time_per_line = elapsed_time / processed_line_count
-                print(f'{processed_line_count}/{line_count} = {processed_line_count/line_count:.2%} in {elapsed_time:.4f}s'
-                      f'averaging {time_per_line}s per line'
-                      f' current serializing index: {serializing_index}',
+                print(f'{processed_line_count}/{line_count} = {processed_line_count/line_count:.2%} in {elapsed_time:.4f}s\n'
+                      f'averaging {time_per_line:2f}s per line\n'
+                      f'current serializing index: {serializing_index}',
                       end='\r')
         
         # Serializing the remaining data
@@ -205,9 +205,9 @@ def extend_dataset(chrom, purpose):
                 feature_data[serializing_index] = matrix
                 feature_data[serializing_index + line_count] = matrix[::-1]
                 serializing_index += 1
-            print(f'{processed_line_count}/{line_count} = {processed_line_count/line_count:.2%} in {elapsed_time:.4f}s'
-                  f'averaging {time_per_line}s per line'
-                  f' current serializing index: {serializing_index}')
+            print(f'{processed_line_count}/{line_count} = {processed_line_count/line_count:.2%} in {elapsed_time:.4f}s\n'
+                  f'averaging {time_per_line:2f}s per line\n'
+                  f'current serializing index: {serializing_index}')
 
 
 if __name__ == '__main__':
