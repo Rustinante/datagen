@@ -101,7 +101,7 @@ def extend_dataset(chrom, purpose):
     
     cache = LineCache()
     
-    array_list = []
+    matrix_list = []
     
     coordinate_filename = os.path.join('data', '{}_{}'.format(chrom, purpose))
     alignment_filename = '{}_maf_sequence.csv'.format(chrom)
@@ -125,7 +125,7 @@ def extend_dataset(chrom, purpose):
             h5py.File(hdf5_filename, 'w') as hdf5_file:
         
         feature_group = hdf5_file.create_group('feature')
-        feature_data = feature_group.create_dataset('data', (line_count * 2, num_species, seq_len, feature_dim), dtype='uint8')
+        feature_data = feature_group.create_dataset('data', (line_count * 2, seq_len, num_species, feature_dim), dtype='uint8')
         
         header = alignment_file.readline().strip().split(',')
         human_index = header.index('hg19')
@@ -142,15 +142,15 @@ def extend_dataset(chrom, purpose):
             alignment_matrix = np.zeros((seq_len, num_species, feature_dim), dtype='uint8')
             
             start_line_hint = None
-            for letter_index, (hg_letter, coordinate) in enumerate(
+            for bp_index, (hg_letter, coordinate) in enumerate(
                     zip(sequence, range(start_coordinate - flanking_number, start_coordinate + 200 + flanking_number))):
                 
                 # insert the human letter first
-                alignment_matrix[letter_index, 0, :] = mapping[hg_letter]
+                alignment_matrix[bp_index, 0, :] = mapping[hg_letter]
                 
                 if coordinate in cache:
                     cached_result = cache[coordinate]
-                    alignment_matrix[letter_index][1:, :] = cached_result[0]
+                    alignment_matrix[bp_index, 1:, :] = cached_result[0]
                     start_line_hint = cached_result[1]
                     continue
                 
@@ -169,7 +169,7 @@ def extend_dataset(chrom, purpose):
                     del tokens[0]
                     
                     # aligned_letters is 100x5
-                    aligned_letters = alignment_matrix[letter_index]
+                    aligned_letters = alignment_matrix[bp_index]
                     
                     for row_number, letter in enumerate(tokens):
                         # +1 because we put hg19 in the first row
@@ -178,21 +178,19 @@ def extend_dataset(chrom, purpose):
                     cache[coordinate] = (aligned_letters[1:, :], start_line_hint)
                 
                 elif hg_letter != 'N' and hg_letter != 'n':
-                    aligned_letters = alignment_matrix[letter_index]
-                    # num_species minus the human
-                    for species_index in range(num_species - 1):
-                        aligned_letters[species_index + 1, :] = mapping['X']
+                    # broadcasting along the species dimension
+                    alignment_matrix[bp_index, 1:, :] = mapping['X']
             
-            array_list.append(alignment_matrix.transpose((1, 0, 2)))
+            matrix_list.append(alignment_matrix)
             
             if processed_line_count % 100 == 1:
-                for matrix in array_list:
+                for matrix in matrix_list:
                     feature_data[serializing_index] = matrix
                     # For the reverse complement strand
                     feature_data[serializing_index + line_count] = matrix[::-1]
                     serializing_index += 1
                 
-                array_list = []
+                matrix_list = []
                 
                 elapsed_time = time.time() - start_time
                 time_per_line = elapsed_time / processed_line_count
@@ -202,8 +200,8 @@ def extend_dataset(chrom, purpose):
                       end='\r')
         
         # Serializing the remaining data
-        if array_list:
-            for matrix in array_list:
+        if matrix_list:
+            for matrix in matrix_list:
                 feature_data[serializing_index] = matrix
                 feature_data[serializing_index + line_count] = matrix[::-1]
                 serializing_index += 1
