@@ -149,9 +149,7 @@ def extend_dataset(chrom, purpose):
                 alignment_matrix[bp_index, 0, :] = mapping[hg_letter]
                 
                 if coordinate in cache:
-                    cached_result = cache[coordinate]
-                    alignment_matrix[bp_index, 1:, :] = cached_result[0]
-                    start_line_hint = cached_result[1]
+                    alignment_matrix[bp_index, 1:, :], start_line_hint = cache[coordinate]
                     continue
                 
                 elif not start_line_hint:
@@ -161,8 +159,7 @@ def extend_dataset(chrom, purpose):
                                                           start_line_hint=start_line_hint, number=coordinate)
                 
                 if result:
-                    start_line_hint = result[1]
-                    tokens = result[0].strip().split(',')
+                    tokens, start_line_hint = result[0].strip().split(','), result[1]
                     # Important: pop the human_index first before removing the start index,
                     # so that the human_index will be the correct index.
                     del tokens[human_index]
@@ -203,6 +200,7 @@ def extend_dataset(chrom, purpose):
         if matrix_list:
             for matrix in matrix_list:
                 feature_data[serializing_index] = matrix
+                # For the reverse complement strand
                 feature_data[serializing_index + line_count] = matrix[::-1]
                 serializing_index += 1
             print(f'{processed_line_count}/{line_count} = {processed_line_count/line_count:.2%} in {elapsed_time:.4f}s '
