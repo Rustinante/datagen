@@ -137,7 +137,7 @@ def extend_dataset(chrom, purpose):
     
     flanking_number = 400
     seq_len = 200 + 2 * flanking_number
-    last_seq_index = seq_len - 1
+    last_bp_index = seq_len - 1
     feature_dim = 5
     
     serializing_index = 0
@@ -171,13 +171,13 @@ def extend_dataset(chrom, purpose):
                     # the entry for revcomp_alignment_matrix in the cache corresponds to the coordinate last_seq_index - bp_index
                     # on the reverse complement strand
                     (alignment_matrix[bp_index, :, :],
-                     revcomp_alignment_matrix[last_seq_index - bp_index, :, :],
+                     revcomp_alignment_matrix[last_bp_index - bp_index, :, :],
                      start_line_hint) = cache[coordinate]
                     continue
                 
                 # insert the human letter first
                 alignment_matrix[bp_index, 0, :] = mapping[hg_letter]
-                revcomp_alignment_matrix[last_seq_index - bp_index, 0, :] = complement_mapping[hg_letter]
+                revcomp_alignment_matrix[last_bp_index - bp_index, 0, :] = complement_mapping[hg_letter]
                 
                 if not start_line_hint:
                     result = search(alignment_file, coordinate, file_byte_size)
@@ -194,7 +194,7 @@ def extend_dataset(chrom, purpose):
                     
                     # aligned_letters is 100x5
                     aligned_letters = alignment_matrix[bp_index]
-                    revcomp_aligned_letters = revcomp_alignment_matrix[last_seq_index - bp_index]
+                    revcomp_aligned_letters = revcomp_alignment_matrix[last_bp_index - bp_index]
                     
                     for remaining_token_index, letter in enumerate(tokens):
                         # +1 because we put hg19 in the first row
@@ -204,10 +204,10 @@ def extend_dataset(chrom, purpose):
                     
                     cache[coordinate] = (aligned_letters, revcomp_aligned_letters, start_line_hint)
                 
-                elif hg_letter != 'N' and hg_letter != 'n':
+                else:
                     # broadcasting along the species dimension
                     alignment_matrix[bp_index, 1:, :] = mapping['X']
-                    revcomp_alignment_matrix[last_seq_index - bp_index, 1:, :] = complement_mapping['X']
+                    revcomp_alignment_matrix[last_bp_index - bp_index, 1:, :] = complement_mapping['X']
             
             matrix_list.append(alignment_matrix)
             revcomp_matrix_list.append(revcomp_alignment_matrix)
