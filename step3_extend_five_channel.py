@@ -72,6 +72,25 @@ mapping = {
     'n': np.array([0, 0, 0, 0, 0])
 }
 
+complement_mapping = {
+    'a': mapping['t'],
+    'A': mapping['T'],
+    
+    'g': mapping['c'],
+    'G': mapping['C'],
+    
+    'c': mapping['g'],
+    'C': mapping['G'],
+    
+    't': mapping['a'],
+    'T': mapping['A'],
+    
+    'X': mapping['X'],
+    
+    'N': mapping['N'],
+    'n': mapping['n']
+}
+
 
 def scan_through_line_for_number(alignment_file, start_line_hint, number):
     alignment_file.seek(start_line_hint)
@@ -102,6 +121,7 @@ def extend_dataset(chrom, purpose):
     cache = LineCache()
     
     matrix_list = []
+    revcomp_matrix_list = []
     
     coordinate_filename = os.path.join('data', '{}_{}'.format(chrom, purpose))
     alignment_filename = '{}_maf_sequence.csv'.format(chrom)
@@ -117,6 +137,7 @@ def extend_dataset(chrom, purpose):
     
     flanking_number = 400
     seq_len = 200 + 2 * flanking_number
+    last_seq_index = seq_len - 1
     feature_dim = 5
     
     serializing_index = 0
@@ -140,19 +161,25 @@ def extend_dataset(chrom, purpose):
             
             # 1000 x 100 x 5
             alignment_matrix = np.zeros((seq_len, num_species, feature_dim), dtype='uint8')
+            revcomp_alignment_matrix = np.zeros((seq_len, num_species, feature_dim), dtype='uint8')
             
             start_line_hint = None
             for bp_index, (hg_letter, coordinate) in enumerate(
                     zip(sequence, range(start_coordinate - flanking_number, start_coordinate + 200 + flanking_number))):
                 
-                # insert the human letter first
-                alignment_matrix[bp_index, 0, :] = mapping[hg_letter]
-                
                 if coordinate in cache:
-                    alignment_matrix[bp_index, 1:, :], start_line_hint = cache[coordinate]
+                    # the entry for revcomp_alignment_matrix in the cache corresponds to the coordinate last_seq_index - bp_index
+                    # on the reverse complement strand
+                    (alignment_matrix[bp_index, :, :],
+                     revcomp_alignment_matrix[last_seq_index - bp_index, :, :],
+                     start_line_hint) = cache[coordinate]
                     continue
                 
-                elif not start_line_hint:
+                # insert the human letter first
+                alignment_matrix[bp_index, 0, :] = mapping[hg_letter]
+                revcomp_alignment_matrix[last_seq_index - bp_index, 0, :] = complement_mapping[hg_letter]
+                
+                if not start_line_hint:
                     result = search(alignment_file, coordinate, file_byte_size)
                 else:
                     result = scan_through_line_for_number(alignment_file=alignment_file,
@@ -167,27 +194,33 @@ def extend_dataset(chrom, purpose):
                     
                     # aligned_letters is 100x5
                     aligned_letters = alignment_matrix[bp_index]
+                    revcomp_aligned_letters = revcomp_alignment_matrix[last_seq_index - bp_index]
                     
-                    for row_number, letter in enumerate(tokens):
+                    for remaining_token_index, letter in enumerate(tokens):
                         # +1 because we put hg19 in the first row
-                        aligned_letters[row_number + 1, :] = mapping[letter]
+                        species_index = remaining_token_index + 1
+                        aligned_letters[species_index, :] = mapping[letter]
+                        revcomp_aligned_letters[species_index, :] = complement_mapping[letter]
                     
-                    cache[coordinate] = (aligned_letters[1:, :], start_line_hint)
+                    cache[coordinate] = (aligned_letters, revcomp_aligned_letters, start_line_hint)
                 
                 elif hg_letter != 'N' and hg_letter != 'n':
                     # broadcasting along the species dimension
                     alignment_matrix[bp_index, 1:, :] = mapping['X']
+                    revcomp_alignment_matrix[last_seq_index - bp_index, 1:, :] = complement_mapping['X']
             
             matrix_list.append(alignment_matrix)
+            revcomp_matrix_list.append(revcomp_alignment_matrix)
             
             if processed_line_count % 100 == 1:
-                for matrix in matrix_list:
+                for matrix, revcomp_matrix in zip(matrix_list, revcomp_matrix_list):
                     feature_data[serializing_index] = matrix
                     # For the reverse complement strand
-                    feature_data[serializing_index + line_count] = matrix[::-1]
+                    feature_data[serializing_index + line_count] = revcomp_matrix
                     serializing_index += 1
                 
                 matrix_list = []
+                revcomp_matrix_list = []
                 
                 elapsed_time = time.time() - start_time
                 time_per_line = elapsed_time / processed_line_count
@@ -198,10 +231,11 @@ def extend_dataset(chrom, purpose):
         
         # Serializing the remaining data
         if matrix_list:
-            for matrix in matrix_list:
+            assert len(matrix_list) == len(revcomp_matrix_list)
+            for matrix, revcomp_matrix, in zip(matrix_list, revcomp_matrix_list):
                 feature_data[serializing_index] = matrix
                 # For the reverse complement strand
-                feature_data[serializing_index + line_count] = matrix[::-1]
+                feature_data[serializing_index + line_count] = revcomp_matrix
                 serializing_index += 1
             print(f'{processed_line_count}/{line_count} = {processed_line_count/line_count:.2%} in {elapsed_time:.4f}s '
                   f'averaging {time_per_line:2f}s per line '
