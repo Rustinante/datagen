@@ -25,13 +25,13 @@ def collect_labels():
                 processed_line_count = line_index + 1
                 print('processed {} lines in {:5f}s, averaging {:5f}s per line'
                       .format(processed_line_count, elapsed, elapsed / processed_line_count))
-            
+    
     return labels_dict
 
 
 def add_labels_to_dataset(labels_dict):
     for chrom, label_list in labels_dict.items():
-        label_array = np.array(label_list)
+        label_array = np.tile(label_list, (2, 1))
         print('=> {} has {} labels with a corresponding array of shape {}'
               .format(chrom, len(label_list), label_array.shape))
         
@@ -42,7 +42,7 @@ def add_labels_to_dataset(labels_dict):
             group = hdf5_file.create_group('label')
             group.create_dataset('data', data=label_array, dtype='uint8')
         print('=> added the labels to {}'.format(hdf5_filename))
-        
+
 
 def collect_validation_labels():
     print('=> collecting validation labels')
@@ -72,7 +72,7 @@ def collect_validation_labels():
 
 def add_labels_to_validation_dataset(labels_dict):
     for chrom, label_list in labels_dict.items():
-        label_array = np.array(label_list)
+        label_array = np.tile(label_list, (2, 1))
         print('=> {} has {} labels with a corresponding array of shape {}'
               .format(chrom, len(label_list), label_array.shape))
         
@@ -83,7 +83,7 @@ def add_labels_to_validation_dataset(labels_dict):
             group = hdf5_file.create_group('label')
             group.create_dataset('data', data=label_array, dtype='uint8')
         print('=> added the labels to {}'.format(hdf5_filename))
-        
+
 
 def collect_test_labels():
     print('=> collecting test labels')
@@ -105,13 +105,13 @@ def collect_test_labels():
                 processed_line_count = line_index + 1
                 print('processed {} lines in {:5f}s, averaging {:5f}s per line'
                       .format(processed_line_count, elapsed_time, elapsed_time / processed_line_count))
-                
+    
     return labels_dict
 
 
 def add_labels_to_test_dataset(labels_dict):
     for chrom, label_list in labels_dict.items():
-        label_array = np.array(label_list)
+        label_array = np.tile(label_list, (2, 1))
         print('=> {} has {} labels with a corresponding array of shape {}'
               .format(chrom, len(label_list), label_array.shape))
         
@@ -128,11 +128,11 @@ if __name__ == '__main__':
     print('=> adding labels to the training dataset')
     collected_train_labels = collect_labels()
     add_labels_to_dataset(collected_train_labels)
-
+    
     collected_validation_labels = collect_validation_labels()
     print('=> adding labels to the validation dataset')
     add_labels_to_validation_dataset(collected_validation_labels)
-
+    
     collected_test_labels = collect_test_labels()
     print('=> adding labels to the testing dataset')
     add_labels_to_test_dataset(collected_test_labels)
