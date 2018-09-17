@@ -60,8 +60,6 @@ def binary_search(low, high, number, file):
     line = file.readline()
     pair = get_start_end_location_from_line(line)
     if not pair:
-        if mid < high:
-            raise ValueError("mid < high but no location can be obtained")
         return binary_search(low, original_mid, number, file)
     start, end_exclusive = pair
     if start <= number < end_exclusive:
