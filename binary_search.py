@@ -3,8 +3,6 @@ import argparse
 
 
 def get_location_from_line(line):
-    if not line:
-        return None
     return int(line.split(',')[0])
 
 
@@ -62,12 +60,7 @@ def binary_search(low, high, number, file):
 
     line = file.readline()
     location = get_location_from_line(line)
-    # print(low, original_mid, mid, high, location)
-    if not location:
-        if mid < high:
-            raise ValueError("mid < high but no location can be obtained")
-        return binary_search(low, original_mid, number, file)
-    elif location == number:
+    if location == number:
         return line, mid
     elif location > number:
         return binary_search(low, original_mid, number, file)

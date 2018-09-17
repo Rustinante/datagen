@@ -3,8 +3,6 @@ import argparse
 
 
 def get_start_end_location_from_line(line):
-    if not line:
-        return None
     # returns start, end_exclusive
     tokens = line.split()
     return int(tokens[1]), int(tokens[2])
@@ -58,10 +56,7 @@ def binary_search(low, high, number, file):
     mid += 1
     
     line = file.readline()
-    pair = get_start_end_location_from_line(line)
-    if not pair:
-        return binary_search(low, original_mid, number, file)
-    start, end_exclusive = pair
+    start, end_exclusive = get_start_end_location_from_line(line)
     if start <= number < end_exclusive:
         return line, mid
     elif start > number:
