@@ -30,7 +30,7 @@ def scan_through_line_for_number(alignment_file, start_line_hint, number):
 
 def binary_search(low, high, number, file):
     if low > high:
-        raise ValueError(f'The low argument ({low}) is larger than the high argument ({high})')
+        return None
 
     # There is only one potential candidate.
     if low == high:

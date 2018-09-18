@@ -32,7 +32,7 @@ def scan_through_line_for_number(constrained_element_file, start_byteoffset_hint
 
 def binary_search(low, high, number, file):
     if low > high:
-        raise ValueError(f'The low argument ({low}) is larger than the high argument ({high})')
+        return None
     
     # There is only one potential candidate.
     if low == high:
