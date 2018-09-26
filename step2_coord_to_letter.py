@@ -1,53 +1,57 @@
 import os
 import twobitreader
 
+flanking_bp = 400
+center_bp = 200
+total_bp = flanking_bp * 2 + center_bp
 
-def get_destination_filename(chr, data_purpose):
-    return os.path.join('data', '{}_{}'.format(chr, data_purpose))
+
+def get_destination_filename(chrom, data_purpose):
+    return os.path.join('data', f'{chrom}_{data_purpose}')
 
 
 def coord_to_letter(coord_filename, data_purpose, genome_dict):
-    print('Handling coordinate file: {}'.format(coord_filename))
+    print(f'Handling coordinate file: {coord_filename}')
     opened_files = {}
-    with open(coord_filename, 'r') as coordinate_file:
-        for line in coordinate_file:
+    with open(coord_filename, 'r') as coord_file:
+        for line in coord_file:
             tokens = line.split()
-            chr, start, stop = tokens[0], int(tokens[1]), int(tokens[2])
-            if chr not in opened_files:
-                print('opening {}'.format(get_destination_filename(chr, data_purpose)))
-                opened_files[chr] = open(get_destination_filename(chr, data_purpose), 'w')
+            chrom, start, stop = tokens[0], int(tokens[1]), int(tokens[2])
+            if chrom not in opened_files:
+                print(f'opening {get_destination_filename(chrom, data_purpose)}')
+                opened_files[chrom] = open(get_destination_filename(chrom, data_purpose), 'w')
 
-            dna_sequence = genome_dict[chr].get_slice(start - 400, stop + 400)
-            if len(dna_sequence) != 1000:
-                print('The DNA sequence is not 200 bp in length!')
-                print('chr: {} start: {} stop: {}'.format(chr, start, stop))
-                
-                middle = genome_dict[chr].get_slice(start, stop)
-                assert(len(middle) == 200)
-                
-                left = genome_dict[chr].get_slice(start - 400, start)
-                right = genome_dict[chr].get_slice(stop + 1, stop + 401)
-                
-                if len(left) != 400:
-                    print('The left flanking sequence has length {}'.format(len(left)))
-                    padding = 'N' * (400 - len(left))
+            dna_sequence = genome_dict[chrom].get_slice(start - flanking_bp, stop + flanking_bp)
+            if len(dna_sequence) != total_bp:
+                print(f'The DNA sequence is not {total_bp} bp in length!')
+                print(f'chr: {chrom} start: {start} stop: {stop}')
+
+                middle = genome_dict[chrom].get_slice(start, stop)
+                assert (len(middle) == center_bp)
+
+                left = genome_dict[chrom].get_slice(start - flanking_bp, start)
+                right = genome_dict[chrom].get_slice(stop + 1, stop + flanking_bp + 1)
+
+                if len(left) != flanking_bp:
+                    print(f'The left flanking sequence has length {len(left)}')
+                    padding = 'N' * (flanking_bp - len(left))
                     left = padding + left
-                
-                if len(right) != 400:
-                    print('The right flanking sequence has length {}'.format(len(right)))
-                    padding = 'N' * (400 - len(right))
+
+                if len(right) != flanking_bp:
+                    print(f'The right flanking sequence has length {len(right)}')
+                    padding = 'N' * (flanking_bp - len(right))
                     right = right + padding
-                    
+
                 padded_sequence = left + middle + right
-                assert(len(padded_sequence) == 1000)
-                print('Padded the sequence to {}'.format(padded_sequence))
-                opened_files[chr].write('{},{}'.format(start, padded_sequence) + '\n')
+                assert (len(padded_sequence) == total_bp)
+                print(f'Padded the sequence to {padded_sequence}')
+                opened_files[chrom].write(f'{start},{padded_sequence}\n')
                 continue
-                
-            opened_files[chr].write('{},{}'.format(start, dna_sequence) + '\n')
+
+            opened_files[chrom].write(f'{start},{dna_sequence}\n')
 
     for chr_index, file in opened_files.items():
-        print('closing {}'.format(get_destination_filename(chr_index, data_purpose)))
+        print(f'closing {get_destination_filename(chr_index, data_purpose)}')
         file.close()
 
 
