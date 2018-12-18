@@ -16,6 +16,7 @@ def get_line_count(filename):
             count += 1
     return count
 
+
 mapping = {
     'a': np.array([1, 0, 0, 0, 0]),
     'A': np.array([1, 0, 0, 0, 0]),
@@ -182,6 +183,8 @@ def extend_dataset(chrom, purpose):
                 # For the reverse complement strand
                 feature_data[serializing_index + line_count] = revcomp_matrix
                 serializing_index += 1
+            elapsed_time = time.time() - start_time
+            time_per_line = elapsed_time / processed_line_count
             print(
                 f'{processed_line_count}/{line_count} = {processed_line_count / line_count:.2%} in {elapsed_time:.4f}s '
                 f'averaging {time_per_line:2f}s per line '
