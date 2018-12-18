@@ -4,7 +4,8 @@ import numpy as np
 import os
 import time
 
-from binary_search import search, get_location_from_line
+from line_cache import LineCache
+from binary_search import scan_through_line_for_number
 import biotool.file_binary_search as file_binary_search
 
 
@@ -14,45 +15,6 @@ def get_line_count(filename):
         for _ in file:
             count += 1
     return count
-
-
-class LineCache:
-    def __init__(self):
-        self.capacity = 1000
-        self.count_per_eviction = 200
-        self.cache = {}
-        self.key_list = []
-
-    def evict(self):
-        for key in self.key_list[:self.count_per_eviction]:
-            del self.cache[key]
-        self.key_list = self.key_list[self.count_per_eviction:]
-
-    def __contains__(self, item):
-        return item in self.cache
-
-    def __getitem__(self, item):
-        return self.cache[item]
-
-    def __setitem__(self, key, value):
-        if len(self.cache) >= self.capacity:
-            self.evict()
-        self.cache[key] = value
-        if key not in self.key_list:
-            self.key_list.append(key)
-
-    def __len__(self):
-        return len(self.cache)
-
-    def keys(self):
-        return self.cache.keys()
-
-    def values(self):
-        return self.cache.values()
-
-    def items(self):
-        return self.cache.items()
-
 
 mapping = {
     'a': np.array([1, 0, 0, 0, 0]),
@@ -91,28 +53,6 @@ complement_mapping = {
     'N': mapping['N'],
     'n': mapping['n']
 }
-
-
-def scan_through_line_for_number(alignment_file, start_line_hint, number):
-    alignment_file.seek(start_line_hint)
-
-    for line in alignment_file:
-        location = get_location_from_line(line)
-
-        if not location:
-            raise ValueError('There still lines in the alignment file but cannot obtain coordinate location')
-
-        if location == number:
-            return line, start_line_hint
-
-        # The lines are sorted so if the current location is already greater than the one
-        # we're searching for we know what we search does not exist.
-        elif location > number:
-            return None
-
-        start_line_hint += len(bytes(line, 'ascii'))
-
-    return None
 
 
 def extend_dataset(chrom, purpose):
@@ -229,7 +169,7 @@ def extend_dataset(chrom, purpose):
                 elapsed_time = time.time() - start_time
                 time_per_line = elapsed_time / processed_line_count
                 print(
-                    f'{processed_line_count}/{line_count} = {processed_line_count/line_count:.2%} in {elapsed_time:.4f}s '
+                    f'{processed_line_count}/{line_count} = {processed_line_count / line_count:.2%} in {elapsed_time:.4f}s '
                     f'averaging {time_per_line:2f}s per line '
                     f'current serializing index: {serializing_index}',
                     end='\r')
@@ -242,9 +182,10 @@ def extend_dataset(chrom, purpose):
                 # For the reverse complement strand
                 feature_data[serializing_index + line_count] = revcomp_matrix
                 serializing_index += 1
-            print(f'{processed_line_count}/{line_count} = {processed_line_count/line_count:.2%} in {elapsed_time:.4f}s '
-                  f'averaging {time_per_line:2f}s per line '
-                  f'current serializing index: {serializing_index}')
+            print(
+                f'{processed_line_count}/{line_count} = {processed_line_count / line_count:.2%} in {elapsed_time:.4f}s '
+                f'averaging {time_per_line:2f}s per line '
+                f'current serializing index: {serializing_index}')
 
 
 if __name__ == '__main__':

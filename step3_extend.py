@@ -5,7 +5,7 @@ import os
 import time
 
 from binary_search import search, scan_through_line_for_number
-from LineCache import LineCache
+from line_cache import LineCache
 
 
 mapping = {
