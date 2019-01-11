@@ -23,7 +23,7 @@ def extend_dataset(chrom, purpose):
 
     coordinate_filename = os.path.join('data', '{}_{}'.format(chrom, purpose))
     alignment_filename = '{}_maf_sequence.csv'.format(chrom)
-    hdf5_filename = '{}_{}.hundred.hdf5'.format(chrom, purpose)
+    hdf5_filename = '{}_{}.counting.hdf5'.format(chrom, purpose)
     num_rows = 2
     num_non_humans = 99
 
