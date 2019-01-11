@@ -12,7 +12,7 @@ from nucleotide_mapping import mapping, complement_mapping, map_counts_to_vec, m
 from util.file import get_line_count
 
 
-def extend_dataset(chrom, purpose):
+def extend_dataset(chrom, purpose, maf_dir):
     checkpoint_time_str = time.strftime('%a %b %d %Y %H:%M:%S UTC%z', time.localtime(time.time()))
     print('Current time: {}'.format(checkpoint_time_str))
 
@@ -22,7 +22,7 @@ def extend_dataset(chrom, purpose):
     revcomp_matrix_list = []
 
     coordinate_filename = os.path.join('data', '{}_{}'.format(chrom, purpose))
-    alignment_filename = '{}_maf_sequence.csv'.format(chrom)
+    alignment_filename = os.path.join(maf_dir, f'{chrom}_maf_sequence.csv')
     hdf5_filename = '{}_{}.counting.hdf5'.format(chrom, purpose)
     num_rows = 2
     num_non_humans = 99
@@ -102,7 +102,7 @@ def extend_dataset(chrom, purpose):
                         t += letter.upper() == 'T'
                         x += letter.upper() == 'X'
 
-                    assert a + g + c + t + x == num_non_humans
+                    assert a + g + c + t + x == num_non_humans, f'{a + g + c + t + x} != {num_non_humans}'
                     seq_matrix[bp_index, 1, :] = map_counts_to_vec(a=a, g=g, c=c, t=t, x=x)
                     revcomp_seq_matrix[last_bp_index - bp_index, 1, :] = map_counts_to_revcomp_vec(a=a, g=g, c=c, t=t,
                                                                                                    x=x)
@@ -158,5 +158,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('chr')
     parser.add_argument('purpose')
+    parser.add_argument('maf_dir')
     args = parser.parse_args()
-    extend_dataset(args.chr, args.purpose)
+    extend_dataset(args.chr, args.purpose, args.maf_dir)
