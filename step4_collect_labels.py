@@ -25,11 +25,10 @@ class ProgressTracker(Timer):
         if line_index % self.frequency == 0:
             elapsed = self.get_elapsed_time()
             processed_line_count = line_index + 1
-            print('processed {} lines in {:5f}s, averaging {:5f}s per line'
-                  .format(processed_line_count, elapsed, elapsed / processed_line_count))
+            print(f'processed {processed_line_count} lines in {elapsed:5f}s, '
+                  f'averaging {elapsed / processed_line_count:5f}s per line')
 
 
-# def collect_labels(coord_filename, data_filename):
 def collect_labels():
     print('=> collecting training labels')
 
@@ -38,7 +37,7 @@ def collect_labels():
 
     with open('train_coord', 'r') as train_coord_file, h5py.File('train.mat', 'r') as train_file:
         training_labels = train_file['traindata']
-        print('training labels has shape: {}'.format(training_labels.shape))
+        print(f'training labels has shape: {training_labels.shape}')
 
         for line_index, line in enumerate(train_coord_file):
             tokens = line.split()
@@ -52,16 +51,15 @@ def collect_labels():
 def add_labels_to_dataset(labels_dict):
     for chrom, label_list in labels_dict.items():
         label_array = np.tile(label_list, (2, 1))
-        print('=> {} has {} labels with a corresponding array of shape {}'
-              .format(chrom, len(label_list), label_array.shape))
+        print(f'=> {chrom} has {len(label_list)} labels with a corresponding array of shape {label_array.shape}')
 
-        hdf5_filename = '{}_train.hundred.hdf5'.format(chrom)
-        print('=> opening {}'.format(hdf5_filename))
+        hdf5_filename = f'{chrom}_train.hundred.hdf5'
+        print(f'=> opening {hdf5_filename}')
 
         with h5py.File(hdf5_filename, 'r+') as hdf5_file:
             group = hdf5_file.create_group('label')
             group.create_dataset('data', data=label_array, dtype='uint8')
-        print('=> added the labels to {}'.format(hdf5_filename))
+        print(f'=> added the labels to {hdf5_filename}')
 
 
 def collect_validation_labels():
@@ -74,7 +72,7 @@ def collect_validation_labels():
 
     with open('valid_coord', 'r') as valid_coord_file:
         validation_labels = validation_file['validdata']
-        print('validation labels has shape: {}'.format(validation_labels.shape))
+        print(f'validation labels has shape: {validation_labels.shape}')
 
         for line_index, line in enumerate(valid_coord_file):
             tokens = line.split()
@@ -88,16 +86,15 @@ def collect_validation_labels():
 def add_labels_to_validation_dataset(labels_dict):
     for chrom, label_list in labels_dict.items():
         label_array = np.tile(label_list, (2, 1))
-        print('=> {} has {} labels with a corresponding array of shape {}'
-              .format(chrom, len(label_list), label_array.shape))
+        print(f'=> {chrom} has {len(label_list)} labels with a corresponding array of shape {label_array.shape}')
 
-        hdf5_filename = '{}_valid.hundred.hdf5'.format(chrom)
-        print('=> opening {}'.format(hdf5_filename))
+        hdf5_filename = f'{chrom}_valid.hundred.hdf5'
+        print(f'=> opening {hdf5_filename}')
 
         with h5py.File(hdf5_filename, 'r+') as hdf5_file:
             group = hdf5_file.create_group('label')
             group.create_dataset('data', data=label_array, dtype='uint8')
-        print('=> added the labels to {}'.format(hdf5_filename))
+        print(f'=> added the labels to {hdf5_filename}')
 
 
 def collect_test_labels():
@@ -107,7 +104,7 @@ def collect_test_labels():
 
     test_file = io.loadmat('test.mat')
     test_labels = test_file['testdata']
-    print('testing labels has shape {}'.format(test_labels.shape))
+    print(f'testing labels has shape {test_labels.shape}')
 
     with open('test_coord', 'r') as test_coord_file:
         for line_index, line in enumerate(test_coord_file):
@@ -122,16 +119,15 @@ def collect_test_labels():
 def add_labels_to_test_dataset(labels_dict):
     for chrom, label_list in labels_dict.items():
         label_array = np.tile(label_list, (2, 1))
-        print('=> {} has {} labels with a corresponding array of shape {}'
-              .format(chrom, len(label_list), label_array.shape))
+        print(f'=> {chrom} has {len(label_list)} labels with a corresponding array of shape {label_array.shape}')
 
-        hdf5_filename = '{}_test.hundred.hdf5'.format(chrom)
-        print('=> opening {}'.format(hdf5_filename))
+        hdf5_filename = f'{chrom}_test.hundred.hdf5'
+        print(f'=> opening {hdf5_filename}')
 
         with h5py.File(hdf5_filename, 'r+') as hdf5_file:
             group = hdf5_file.create_group('label')
             group.create_dataset('data', data=label_array, dtype='uint8')
-        print('=> added the labels to {}'.format(hdf5_filename))
+        print(f'=> added the labels to {hdf5_filename}')
 
 
 if __name__ == '__main__':
