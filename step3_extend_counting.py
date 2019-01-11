@@ -8,7 +8,7 @@ import numpy as np
 
 from binary_search import scan_through_line_for_number
 from line_cache import LineCache
-from nucleotide_mapping import mapping, complement_mapping
+from nucleotide_mapping import mapping, complement_mapping, map_counts_to_vec, map_counts_to_revcomp_vec
 from util.file import get_line_count
 
 
@@ -24,7 +24,8 @@ def extend_dataset(chrom, purpose):
     coordinate_filename = os.path.join('data', '{}_{}'.format(chrom, purpose))
     alignment_filename = '{}_maf_sequence.csv'.format(chrom)
     hdf5_filename = '{}_{}.hundred.hdf5'.format(chrom, purpose)
-    num_species = 100
+    num_rows = 2
+    num_non_humans = 99
 
     print('=> coordinate_filename: {}'.format(coordinate_filename))
     print('=> alignment_filename: {}'.format(alignment_filename))
@@ -44,7 +45,7 @@ def extend_dataset(chrom, purpose):
             h5py.File(hdf5_filename, 'w') as hdf5_file:
 
         feature_group = hdf5_file.create_group('feature')
-        feature_data = feature_group.create_dataset('data', (line_count * 2, seq_len, num_species, feature_dim),
+        feature_data = feature_group.create_dataset('data', (line_count * 2, seq_len, num_rows, feature_dim),
                                                     dtype='uint8')
 
         header = alignment_file.readline().strip().split(',')
@@ -58,25 +59,25 @@ def extend_dataset(chrom, purpose):
             (start_coordinate, sequence) = line.strip().split(',')
             start_coordinate = int(start_coordinate)
 
-            # 1000 x 100 x 5
-            alignment_matrix = np.zeros((seq_len, num_species, feature_dim), dtype='uint8')
-            revcomp_alignment_matrix = np.zeros((seq_len, num_species, feature_dim), dtype='uint8')
+            # 1000 x 2 x 5
+            seq_matrix = np.zeros((seq_len, num_rows, feature_dim), dtype='uint8')
+            revcomp_seq_matrix = np.zeros((seq_len, num_rows, feature_dim), dtype='uint8')
 
             start_line_hint = None
             for bp_index, (hg_letter, coordinate) in enumerate(
                     zip(sequence, range(start_coordinate - flanking_number, start_coordinate + 200 + flanking_number))):
 
                 if coordinate in cache:
-                    # the entry for revcomp_alignment_matrix in the cache corresponds to the coordinate last_seq_index - bp_index
-                    # on the reverse complement strand
-                    (alignment_matrix[bp_index, :, :],
-                     revcomp_alignment_matrix[last_bp_index - bp_index, :, :],
+                    # the entry for revcomp_alignment_matrix in the cache corresponds to the
+                    # coordinate last_seq_index - bp_index on the reverse complement strand
+                    (seq_matrix[bp_index, :, :],
+                     revcomp_seq_matrix[last_bp_index - bp_index, :, :],
                      start_line_hint) = cache[coordinate]
                     continue
 
                 # insert the human letter first
-                alignment_matrix[bp_index, 0, :] = mapping[hg_letter]
-                revcomp_alignment_matrix[last_bp_index - bp_index, 0, :] = complement_mapping[hg_letter]
+                seq_matrix[bp_index, 0, :] = mapping[hg_letter]
+                revcomp_seq_matrix[last_bp_index - bp_index, 0, :] = complement_mapping[hg_letter]
 
                 if not start_line_hint:
                     # TODO: test they are equal
@@ -93,25 +94,31 @@ def extend_dataset(chrom, purpose):
                     del tokens[human_index]
                     del tokens[0]
 
-                    # aligned_letters is 100x5
-                    aligned_letters = alignment_matrix[bp_index]
-                    revcomp_aligned_letters = revcomp_alignment_matrix[last_bp_index - bp_index]
-
+                    a = g = c = t = x = 0
                     for remaining_token_index, letter in enumerate(tokens):
-                        # +1 because we put hg19 in the first row
-                        species_index = remaining_token_index + 1
-                        aligned_letters[species_index, :] = mapping[letter]
-                        revcomp_aligned_letters[species_index, :] = complement_mapping[letter]
+                        a += letter.upper() == 'A'
+                        g += letter.upper() == 'G'
+                        c += letter.upper() == 'C'
+                        t += letter.upper() == 'T'
+                        x += letter.upper() == 'X'
 
-                    cache[coordinate] = (aligned_letters, revcomp_aligned_letters, start_line_hint)
+                    assert a + g + c + t + x == num_non_humans
+                    seq_matrix[bp_index, 1, :] = map_counts_to_vec(a=a, g=g, c=c, t=t, x=x)
+                    revcomp_seq_matrix[last_bp_index - bp_index, 1, :] = map_counts_to_revcomp_vec(a=a, g=g, c=c, t=t,
+                                                                                                   x=x)
+
+                    cache[coordinate] = (seq_matrix[bp_index],
+                                         revcomp_seq_matrix[last_bp_index - bp_index],
+                                         start_line_hint)
 
                 else:
                     # broadcasting along the species dimension
-                    alignment_matrix[bp_index, 1:, :] = mapping['X']
-                    revcomp_alignment_matrix[last_bp_index - bp_index, 1:, :] = complement_mapping['X']
+                    seq_matrix[bp_index, 1, :] = map_counts_to_vec(a=0, g=0, c=0, t=0, x=num_non_humans)
+                    revcomp_seq_matrix[last_bp_index - bp_index, 1, :] = map_counts_to_revcomp_vec(a=0, g=0, c=0, t=0,
+                                                                                                   x=num_non_humans)
 
-            matrix_list.append(alignment_matrix)
-            revcomp_matrix_list.append(revcomp_alignment_matrix)
+            matrix_list.append(seq_matrix)
+            revcomp_matrix_list.append(revcomp_seq_matrix)
 
             if processed_line_count % 100 == 1:
                 for matrix, revcomp_matrix in zip(matrix_list, revcomp_matrix_list):
