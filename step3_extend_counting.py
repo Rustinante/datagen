@@ -96,11 +96,12 @@ def extend_dataset(chrom, purpose, maf_dir):
 
                     a = g = c = t = x = 0
                     for remaining_token_index, letter in enumerate(tokens):
-                        a += letter.upper() == 'A'
-                        g += letter.upper() == 'G'
-                        c += letter.upper() == 'C'
-                        t += letter.upper() == 'T'
-                        x += letter.upper() == 'X'
+                        upper = letter.upper()
+                        a += upper == 'A'
+                        g += upper == 'G'
+                        c += upper == 'C'
+                        t += upper == 'T'
+                        x += upper == 'X' or upper == 'N'
 
                     assert a + g + c + t + x == num_non_humans, f'{a + g + c + t + x} != {num_non_humans}'
                     seq_matrix[bp_index, 1, :] = map_counts_to_vec(a=a, g=g, c=c, t=t, x=x)
